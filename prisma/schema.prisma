@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth.js Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // For email/password auth
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  meetings Meeting[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Clarnote Models
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  tags        String   @default("") // Comma-separated tags
+  language    String   @default("en")
+  
+  // File info
+  originalFileName String?
+  fileUrl          String?
+  fileSize         Int?
+  duration         Int? // in seconds
+  
+  // Processing status
+  status           MeetingStatus @default(UPLOADED)
+  transcriptionId  String?
+  
+  // AI generated content
+  transcript       String?
+  transcriptSegments String? // JSON array of {speaker: string, text: string, startTime?: number, endTime?: number}
+  speakerMap       String? // JSON object mapping speaker IDs to custom names {speaker_1: "Dan", speaker_2: "Veronika"}
+  summary          String?
+  actionItems      String? // JSON string of action items
+  followUpEmail    String?
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum MeetingStatus {
+  UPLOADED
+  TRANSCRIBING
+  TRANSCRIBED
+  GENERATING_SUMMARY
+  COMPLETED
+  ERROR
+}

@@ -1,0 +1,141 @@
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const meetingId = params.id
+    const body = await request.json()
+    const { format } = body
+
+    // Fetch meeting data
+    const meeting = await prisma.meeting.findUnique({
+      where: {
+        id: meetingId,
+        userId: session.user.id, // Ensure user owns this meeting
+      },
+    })
+
+    if (!meeting) {
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 })
+    }
+
+    if (format === 'pdf') {
+      // For now, we'll create a simple HTML-to-PDF conversion
+      // In production, you'd use a library like Puppeteer or jsPDF
+      const htmlContent = generatePDFHTML(meeting)
+      
+      // Simple PDF generation (you'd want to use a proper PDF library)
+      const response = new NextResponse(htmlContent, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${meeting.title}-summary.pdf"`,
+        },
+      })
+
+      return response
+    }
+
+    return NextResponse.json({ error: "Invalid format" }, { status: 400 })
+  } catch (error) {
+    console.error("Export error:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
+function generatePDFHTML(meeting: any): string {
+  const actionItems = meeting.actionItems ? JSON.parse(meeting.actionItems) : null
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${meeting.title} - Meeting Summary</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #2d3748; border-bottom: 2px solid #4a5568; padding-bottom: 10px; }
+        h2 { color: #4a5568; margin-top: 30px; }
+        .metadata { background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .section { margin-bottom: 30px; }
+        .transcript { background: #f9f9f9; padding: 15px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+        .action-items { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .action-column { background: #f7fafc; padding: 15px; border-radius: 8px; }
+        .action-column h3 { margin-top: 0; color: #2d3748; }
+      </style>
+    </head>
+    <body>
+      <h1>${meeting.title}</h1>
+      
+      <div class="metadata">
+        <strong>Date:</strong> ${new Date(meeting.createdAt).toLocaleDateString()}<br>
+        <strong>Status:</strong> ${meeting.status}<br>
+        ${meeting.originalFileName ? `<strong>File:</strong> ${meeting.originalFileName}<br>` : ''}
+        ${meeting.duration ? `<strong>Duration:</strong> ${Math.round(meeting.duration / 60)} minutes<br>` : ''}
+      </div>
+
+      ${meeting.summary ? `
+        <div class="section">
+          <h2>Executive Summary</h2>
+          <p>${meeting.summary.replace(/\n/g, '<br>')}</p>
+        </div>
+      ` : ''}
+
+      ${actionItems ? `
+        <div class="section">
+          <h2>Actionable Insights</h2>
+          <div class="action-items">
+            <div class="action-column">
+              <h3>Action Items</h3>
+              ${actionItems.actionItems?.length > 0 ? 
+                `<ul>${actionItems.actionItems.map((item: string) => `<li>${item}</li>`).join('')}</ul>` :
+                '<p><em>No action items identified</em></p>'
+              }
+            </div>
+            <div class="action-column">
+              <h3>Key Decisions</h3>
+              ${actionItems.keyDecisions?.length > 0 ? 
+                `<ul>${actionItems.keyDecisions.map((decision: string) => `<li>${decision}</li>`).join('')}</ul>` :
+                '<p><em>No key decisions identified</em></p>'
+              }
+            </div>
+            <div class="action-column">
+              <h3>Next Steps</h3>
+              ${actionItems.nextSteps?.length > 0 ? 
+                `<ul>${actionItems.nextSteps.map((step: string) => `<li>${step}</li>`).join('')}</ul>` :
+                '<p><em>No next steps identified</em></p>'
+              }
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      ${meeting.transcript ? `
+        <div class="section">
+          <h2>Full Transcript</h2>
+          <div class="transcript">${meeting.transcript}</div>
+        </div>
+      ` : ''}
+
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #718096; font-size: 12px;">
+        Generated by Clarnote AI Meeting Assistant
+      </div>
+    </body>
+    </html>
+  `
+} 
