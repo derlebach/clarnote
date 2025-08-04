@@ -2,13 +2,30 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 export default function ComingSoon() {
   const [email, setEmail] = useState("")
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const analytics = useAnalytics()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Track email signup with both old and new methods
+    analytics.trackEmailSignup(email, 'coming-soon-page')
+    analytics.trackFormSubmit('email-signup', true)
+    
+    // Track custom event
+    analytics.trackEvent('email_waitlist_signup', { 
+      source: 'coming-soon-page',
+      email_domain: email.split('@')[1],
+      timestamp: new Date().toISOString()
+    })
+    
+    // Track feature discovery if this is their first interaction
+    analytics.trackFeatureDiscovered('email_waitlist', 'coming-soon-page')
+    
     // TODO: Add email submission logic here
     setIsSubmitted(true)
     setTimeout(() => setIsSubmitted(false), 3000)

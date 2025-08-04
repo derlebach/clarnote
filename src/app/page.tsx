@@ -2,11 +2,15 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 export default function Home() {
   const [showAppModal, setShowAppModal] = useState(false)
+  const analytics = useAnalytics()
 
   const handleGetAppClick = () => {
+    analytics.trackButtonClick('get-app', 'hero-section')
+    
     // Check if user is on mobile device
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     
@@ -16,15 +20,19 @@ export default function Home() {
       const isAndroid = /Android/.test(navigator.userAgent)
       
       if (isIOS) {
+        analytics.trackAppDownload('ios')
         window.open('https://apps.apple.com', '_blank')
       } else if (isAndroid) {
+        analytics.trackAppDownload('android')
         window.open('https://play.google.com/store', '_blank')
       } else {
         // Fallback for other mobile devices - show modal
+        analytics.trackModalOpen('app-download')
         setShowAppModal(true)
       }
     } else {
       // Desktop users see the modal
+      analytics.trackModalOpen('app-download')
       setShowAppModal(true)
     }
   }
@@ -88,7 +96,10 @@ export default function Home() {
           
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 mb-8">
             <Link href="/auth/signup">
-              <button className="w-full sm:w-auto bg-gray-900 text-white font-medium px-8 py-3 rounded-xl hover:bg-gray-800 transition-all duration-200 hover:scale-105">
+              <button 
+                onClick={() => analytics.trackButtonClick('start-today', 'hero-section')}
+                className="w-full sm:w-auto bg-gray-900 text-white font-medium px-8 py-3 rounded-xl hover:bg-gray-800 transition-all duration-200 hover:scale-105"
+              >
                 Start Today
               </button>
             </Link>
@@ -280,12 +291,18 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 mb-6">
             <Link href="/auth/signup">
-              <button className="w-full sm:w-auto bg-gray-900 text-white font-medium px-8 py-3 rounded-xl hover:bg-gray-800 transition-all duration-200 hover:scale-105">
+              <button 
+                onClick={() => analytics.trackButtonClick('start-free-trial', 'final-cta')}
+                className="w-full sm:w-auto bg-gray-900 text-white font-medium px-8 py-3 rounded-xl hover:bg-gray-800 transition-all duration-200 hover:scale-105"
+              >
                 Start Free Trial
               </button>
             </Link>
             <Link href="/demo">
-              <button className="w-full sm:w-auto border border-gray-300 text-gray-700 font-medium px-8 py-3 rounded-xl hover:border-gray-400 hover:bg-white/60 transition-all duration-200">
+              <button 
+                onClick={() => analytics.trackButtonClick('schedule-demo', 'final-cta')}
+                className="w-full sm:w-auto border border-gray-300 text-gray-700 font-medium px-8 py-3 rounded-xl hover:border-gray-400 hover:bg-white/60 transition-all duration-200"
+              >
                 Schedule Demo
               </button>
             </Link>
@@ -336,7 +353,10 @@ export default function Home() {
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-2xl font-bold text-gray-900">Download Clarnote App</h2>
               <button 
-                onClick={() => setShowAppModal(false)}
+                onClick={() => {
+                  analytics.trackModalClose('app-download', 'close-button')
+                  setShowAppModal(false)
+                }}
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
               >
                 <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,6 +393,7 @@ export default function Home() {
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-block"
+                    onClick={() => analytics.trackAppDownload('ios')}
                   >
                     <div className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors">
                       <div className="flex items-center space-x-3">
@@ -408,6 +429,7 @@ export default function Home() {
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-block"
+                    onClick={() => analytics.trackAppDownload('android')}
                   >
                     <div className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors">
                       <div className="flex items-center space-x-3">
