@@ -10,13 +10,14 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/auth/signin",
   },
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
     CredentialsProvider({
       name: "credentials",
@@ -65,7 +66,9 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      if (session.user && token.id) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub
+      } else if (session.user && token.id) {
         session.user.id = token.id as string
       }
       return session
@@ -74,7 +77,7 @@ export const authOptions: NextAuthOptions = {
       // Always redirect to localhost in development
       if (process.env.NODE_ENV === 'development') {
         if (url.startsWith('/')) return `${baseUrl}${url}`
-        if (url.includes('localhost:3000')) return url
+        if (url.includes('localhost:3001')) return url
         return baseUrl
       }
       // Production redirect logic
