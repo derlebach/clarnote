@@ -4,6 +4,9 @@ const isMobileBuild = process.env.BUILD_MODE === 'mobile';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  serverActions: {
+    bodySizeLimit: '50mb', // Allow up to 50MB file uploads
+  },
   ...(isMobileBuild && {
     output: 'export',
     outDir: 'out',

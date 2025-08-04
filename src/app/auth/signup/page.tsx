@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import Image from "next/image"
 
 export default function SignUp() {
   const [name, setName] = useState("")
@@ -95,12 +96,13 @@ export default function SignUp() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2 mb-8">
-            <div className="w-8 h-8 bg-gradient-to-br from-gray-900 to-gray-700 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-              </svg>
-            </div>
-                            <span className="text-lg font-semibold text-gray-900">Clarnote</span>
+            <Image 
+              src="/logo.svg" 
+              alt="Clarnote" 
+              width={127}
+              height={42}
+              className="h-8 w-auto"
+            />
           </Link>
           
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>

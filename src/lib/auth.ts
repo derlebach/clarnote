@@ -69,6 +69,18 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string
       }
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      // Always redirect to localhost in development
+      if (process.env.NODE_ENV === 'development') {
+        if (url.startsWith('/')) return `${baseUrl}${url}`
+        if (url.includes('localhost:3000')) return url
+        return baseUrl
+      }
+      // Production redirect logic
+      if (url.startsWith('/')) return `${baseUrl}${url}`
+      if (new URL(url).origin === baseUrl) return url
+      return baseUrl
     }
   }
 }

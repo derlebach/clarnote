@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import ProfileMenu from '@/components/ProfileMenu'
+import { SubscribeButton } from '@/components/SubscribeButton'
+import Image from 'next/image'
 
 export default function Subscription() {
   const { data: session, status } = useSession()
@@ -30,12 +32,13 @@ export default function Subscription() {
         <div className="max-w-6xl mx-auto px-8 py-4">
           <div className="flex items-center justify-between">
             <Link href="/dashboard" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-gray-900 to-gray-700 rounded-lg flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
-              </div>
-              <span className="text-lg font-semibold text-gray-900">Clarnote</span>
+              <Image 
+                src="/logo.svg" 
+                alt="Clarnote" 
+                width={127}
+                height={42}
+                className="h-8 w-auto"
+              />
             </Link>
             
             <div className="flex items-center space-x-4">
@@ -85,15 +88,9 @@ export default function Subscription() {
               </div>
             </div>
             
-            <Button
-              onClick={() => {
-                // TODO: Integrate with Stripe checkout
-                alert('Stripe integration coming soon!')
-              }}
-              className="w-full bg-gray-900 hover:bg-gray-800 mb-4"
-            >
-              Start Pro Subscription
-            </Button>
+            <div className="w-full mb-4">
+              <SubscribeButton />
+            </div>
             
             <Link href="/settings" className="text-sm text-gray-600 hover:text-gray-900">
               ← Back to Settings

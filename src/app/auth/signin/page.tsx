@@ -7,6 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Image from "next/image"
 
 export default function SignIn() {
   const [email, setEmail] = useState("")
@@ -55,7 +56,13 @@ export default function SignIn() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-                          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight mb-2">Clarnote</h1>
+            <Image 
+              src="/logo.svg" 
+              alt="Clarnote" 
+              width={127}
+              height={42}
+              className="h-8 w-auto mx-auto mb-2"
+            />
           </Link>
           <p className="text-gray-600">AI-powered meeting assistant</p>
         </div>

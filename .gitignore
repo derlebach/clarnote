@@ -124,3 +124,5 @@ public
 # Temporary folders
 tmp/
 temp/
+# Environment files (all variants)
+.env*
