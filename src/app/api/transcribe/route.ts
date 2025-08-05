@@ -17,50 +17,71 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
     }
 
-    console.log(`Starting transcription for ${file.name} (${file.size} bytes)`)
+    console.log(`Starting WhisperX transcription for ${file.name} (${file.size} bytes)`)
 
-    // TODO: Replace with your actual WhisperX backend endpoint
-    // Options: Modal, RunPod, or custom GPU server
-    const whisperXEndpoint = process.env.WHISPERX_ENDPOINT || 'https://your-whisperx-backend.com/transcribe'
-
-    // Forward the file to WhisperX backend
-    const transcriptionFormData = new FormData()
-    transcriptionFormData.append('file', file)
+    // Get WhisperX endpoint from environment
+    const whisperXEndpoint = process.env.WHISPERX_ENDPOINT
     
-    // Add optional parameters for WhisperX
-    transcriptionFormData.append('language', 'auto') // or specific language code
-    transcriptionFormData.append('task', 'transcribe') // or 'translate'
-    
-    console.log(`Sending file to WhisperX backend: ${whisperXEndpoint}`)
-
-    const res = await fetch(whisperXEndpoint, {
-      method: 'POST',
-      body: transcriptionFormData,
-      headers: {
-        // Add any required API keys for your WhisperX backend
-        'Authorization': `Bearer ${process.env.WHISPERX_API_KEY || ''}`,
-      },
-    })
-
-    if (!res.ok) {
-      console.error(`WhisperX API error: ${res.status} ${res.statusText}`)
+    if (!whisperXEndpoint) {
+      console.error('WHISPERX_ENDPOINT not configured')
       return NextResponse.json({ 
-        error: 'Transcription service unavailable', 
-        details: `Backend returned ${res.status}`
+        error: 'WhisperX service not configured. Please set WHISPERX_ENDPOINT environment variable.' 
       }, { status: 500 })
     }
 
-    const data = await res.json()
-    console.log('Transcription completed successfully')
+    // Convert file to buffer for transmission
+    const fileBuffer = await file.arrayBuffer()
+    const fileBytes = new Uint8Array(fileBuffer)
 
-    // Return standardized response format
-    // WhisperX typically returns: { text: string, segments: [...], language: string }
+    // Prepare request data for Modal endpoint
+    const requestData = {
+      file: Array.from(fileBytes), // Convert to array for JSON serialization
+      language: formData.get('language') || 'auto',
+      task: formData.get('task') || 'transcribe'
+    }
+
+    console.log(`Sending file to WhisperX backend: ${whisperXEndpoint}`)
+
+    const response = await fetch(whisperXEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.WHISPERX_API_KEY || ''}`,
+      },
+      body: JSON.stringify(requestData),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`WhisperX API error: ${response.status} ${response.statusText}`, errorText)
+      return NextResponse.json({ 
+        error: 'WhisperX transcription failed', 
+        details: `Backend returned ${response.status}: ${errorText}`
+      }, { status: 500 })
+    }
+
+    const data = await response.json()
+    
+    if (!data.success) {
+      console.error('WhisperX transcription failed:', data.error)
+      return NextResponse.json({ 
+        error: 'Transcription failed', 
+        details: data.error 
+      }, { status: 500 })
+    }
+
+    console.log('✅ WhisperX transcription completed successfully')
+    console.log(`Language: ${data.language}, Duration: ${data.duration}s, Segments: ${data.segments?.length || 0}`)
+
+    // Return standardized response format compatible with frontend
     return NextResponse.json({
-      text: data.text || data.transcript || '',
+      text: data.text || '',
       segments: data.segments || [],
       language: data.language || 'unknown',
       duration: data.duration || 0,
-      success: true
+      success: true,
+      model: data.model || 'whisperx',
+      features: data.features || {}
     })
 
   } catch (error) {
