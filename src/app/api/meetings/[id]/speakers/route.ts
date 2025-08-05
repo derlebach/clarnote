@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth"
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,7 +14,7 @@ export async function PUT(
     }
 
     const { speakerMap } = await request.json()
-    const meetingId = params.id
+    const { id: meetingId } = await params
 
     // Validate speaker map
     if (!speakerMap || typeof speakerMap !== 'object') {
