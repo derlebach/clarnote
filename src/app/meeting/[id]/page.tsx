@@ -538,31 +538,129 @@ export default function MeetingDetail() {
                     <Button
                       onClick={async () => {
                         try {
-                          console.log('Testing enhanced speaker detection...')
-                          const response = await fetch(`/api/meetings/${meeting.id}/regenerate-speakers`, {
-                            method: 'POST'
-                          })
-                          if (response.ok) {
-                            const result = await response.json()
-                            console.log('Enhanced speaker detection result:', result)
-                            alert(`Enhanced detection found ${result.segmentCount} segments with ${result.speakers.length} speakers: ${result.speakers.join(', ')}`)
-                            // Refresh the meeting data to show new segments
-                            fetchMeeting()
+                          const segments = getTranscriptSegments()
+                          if (segments.length === 0 || segments.every(s => s.speaker === 'speaker_0')) {
+                            // Need to fix missing or poor speaker segments
+                            console.log('Fixing speaker segments...')
+                            const response = await fetch(`/api/meetings/${meeting.id}/fix-segments`, {
+                              method: 'POST'
+                            })
+                            if (response.ok) {
+                              const result = await response.json()
+                              console.log('Speaker segments fixed:', result)
+                              alert(`✅ Fixed! Generated ${result.segmentCount} segments with ${result.speakers.length} speakers: ${result.speakers.join(', ')}`)
+                              // Refresh the meeting data to show new segments
+                              fetchMeeting()
+                            } else {
+                              console.error('Failed to fix speaker segments')
+                              alert('❌ Failed to fix speaker segments')
+                            }
                           } else {
-                            console.error('Failed to test speaker detection')
+                            // Test existing segments
+                            console.log('Testing existing speaker segments...')
+                            const response = await fetch(`/api/meetings/${meeting.id}/regenerate-speakers`, {
+                              method: 'POST'
+                            })
+                            if (response.ok) {
+                              const result = await response.json()
+                              console.log('Speaker analysis result:', result)
+                              alert(`✅ Analysis: ${result.segmentCount} segments with ${result.speakers.length} speakers: ${result.speakers.join(', ')}`)
+                            } else {
+                              console.error('Failed to analyze speaker segments')
+                            }
                           }
                         } catch (error) {
-                          console.error('Error testing speaker detection:', error)
+                          console.error('Error with speaker detection:', error)
+                          alert('❌ Error with speaker detection')
                         }
                       }}
                       variant="outline"
                       className="text-xs border-gray-300 hover:bg-gray-50 px-3 py-1"
                     >
-                      🧪 Test Enhanced Speaker Detection
+                      ✨ Fix Speaker Detection
                     </Button>
+                    
+                    {/* Show retry button for failed transcriptions */}
+                    {meeting.status === 'ERROR' && meeting.description?.includes('quality issues') && (
+                      <Button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(`/api/meetings/${meeting.id}/retry-transcription`, {
+                              method: 'POST'
+                            })
+                            if (response.ok) {
+                              const result = await response.json()
+                              alert(`✅ ${result.message}`)
+                              // Refresh to show processing status
+                              fetchMeeting()
+                            } else {
+                              const error = await response.json()
+                              alert(`❌ Failed to retry: ${error.error}`)
+                            }
+                          } catch (error) {
+                            console.error('Error retrying transcription:', error)
+                            alert('❌ Error retrying transcription')
+                          }
+                        }}
+                        variant="outline"
+                        className="text-xs border-red-300 text-red-600 hover:bg-red-50 px-3 py-1"
+                      >
+                        🔄 Retry Transcription
+                      </Button>
+                    )}
+                    
+                    {/* Show clean transcript button for corrupted transcripts */}
+                    {meeting.transcript && meeting.transcript.length > 500 && (
+                      meeting.transcript.substring(0, 100) === meeting.transcript.substring(100, 200) ||
+                      meeting.transcript.includes('posílat víc a můžeme je posílat')
+                    ) && (
+                      <Button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(`/api/meetings/${meeting.id}/retry-transcription`, {
+                              method: 'POST'
+                            })
+                            if (response.ok) {
+                              const result = await response.json()
+                              alert(`✅ ${result.message}`)
+                              fetchMeeting()
+                            } else {
+                              alert('❌ Failed to fix transcript')
+                            }
+                          } catch (error) {
+                            console.error('Error fixing transcript:', error)
+                            alert('❌ Error fixing transcript')
+                          }
+                        }}
+                        variant="outline"
+                        className="text-xs border-orange-300 text-orange-600 hover:bg-orange-50 px-3 py-1"
+                      >
+                        🧹 Fix Corrupted Transcript
+                      </Button>
+                    )}
                   </div>
+                  
+                  {/* Show error message for failed transcriptions */}
+                  {meeting.status === 'ERROR' && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-red-800">Transcription Failed</h3>
+                          <div className="mt-2 text-sm text-red-700">
+                            <p>{meeting.description || 'The transcription could not be completed due to quality issues.'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   {meeting.transcript ? (
-                    <div className="bg-gray-50 rounded-2xl p-6 max-h-96 overflow-y-auto">
+                    <div className="bg-gray-50 rounded-2xl p-6">
                       <div className="space-y-4">
                         {getTranscriptSegments().map((segment, index) => {
                           const speakerDisplayName = getSpeakerDisplayName(segment.speaker, speakerMap)

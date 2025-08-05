@@ -9,6 +9,8 @@ import Image from "next/image"
 
 export default function Home() {
   const [showAppModal, setShowAppModal] = useState(false)
+  const [logoError, setLogoError] = useState(false)
+  const [footerLogoError, setFooterLogoError] = useState(false)
   const analytics = useAnalytics()
 
   const handleGetAppClick = () => {
@@ -47,15 +49,20 @@ export default function Home() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center space-x-2">
-              <Image 
-                src="/logo.svg" 
-                alt="Clarnote" 
-                width={127}
-                height={42}
-                className="h-8 w-auto"
-                priority
-                unoptimized
-              />
+              {!logoError ? (
+                <Image 
+                  src="/logo.svg" 
+                  alt="Clarnote" 
+                  width={127}
+                  height={42}
+                  className="h-8 w-auto"
+                  priority
+                  unoptimized
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <span className="text-xl font-bold text-gray-900">Clarnote</span>
+              )}
             </div>
 
             {/* Navigation Links */}
@@ -324,14 +331,19 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-8 py-12">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex items-center space-x-2">
-              <Image 
-                src="/logo.svg" 
-                alt="Clarnote" 
-                width={95}
-                height={31}
-                className="h-6 w-auto"
-                unoptimized
-              />
+              {!footerLogoError ? (
+                <Image 
+                  src="/logo.svg" 
+                  alt="Clarnote" 
+                  width={95}
+                  height={31}
+                  className="h-6 w-auto"
+                  unoptimized
+                  onError={() => setFooterLogoError(true)}
+                />
+              ) : (
+                <span className="text-base font-semibold text-gray-900">Clarnote</span>
+              )}
             </div>
             
             <div className="flex items-center space-x-8">
