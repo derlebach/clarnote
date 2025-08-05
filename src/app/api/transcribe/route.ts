@@ -13,6 +13,40 @@ function getOpenAIClient() {
   return new OpenAI({ apiKey })
 }
 
+// CRITICAL: Language code mapping to ensure OpenAI compatibility
+function normalizeLanguageCode(language: string): string {
+  // Map common language name variations to ISO-639-1 codes
+  const languageMap: Record<string, string> = {
+    'czech': 'cs',
+    'english': 'en', 
+    'spanish': 'es',
+    'french': 'fr',
+    'german': 'de',
+    'italian': 'it',
+    'portuguese': 'pt',
+    'russian': 'ru',
+    'japanese': 'ja',
+    'korean': 'ko',
+    'chinese': 'zh',
+    'hindi': 'hi',
+    'arabic': 'ar',
+    'dutch': 'nl',
+    'polish': 'pl',
+    'swedish': 'sv',
+    'danish': 'da',
+    'norwegian': 'no',
+    'finnish': 'fi'
+  }
+  
+  // If it's already a valid 2-letter code, return as is
+  if (language.length === 2) {
+    return language.toLowerCase()
+  }
+  
+  // Otherwise, try to map from the language name
+  return languageMap[language.toLowerCase()] || language
+}
+
 // Post-processing utilities for improving transcription quality
 function cleanTranscript(text: string, language: string): string {
   if (!text) return text
@@ -107,57 +141,80 @@ function findNonRepeatingPortion(text: string): string {
   return text // Return original if no clear pattern found
 }
 
+// CRITICAL: Much stricter validation to catch hallucinations
 function validateTranscriptionQuality(text: string, duration: number): { isValid: boolean; issues: string[] } {
   const issues: string[] = []
   
   if (!text || text.trim().length === 0) {
-    issues.push("Empty transcription")
+    issues.push("CRITICAL: Empty transcription")
     return { isValid: false, issues }
   }
 
   const wordCount = text.trim().split(/\s+/).length
   const wordsPerSecond = wordCount / Math.max(duration, 1)
 
-  // Check for reasonable speech rate (typically 2-4 words per second)
-  if (wordsPerSecond > 6) {
-    issues.push("Transcription may be too fast/compressed")
+  // Check for reasonable speech rate
+  if (wordsPerSecond > 8) {
+    issues.push("CRITICAL: Speech rate too fast - likely hallucination")
+    return { isValid: false, issues }
   }
-  if (wordsPerSecond < 0.5 && duration > 30) {
-    issues.push("Transcription may be incomplete")
+  if (wordsPerSecond < 0.3 && duration > 30) {
+    issues.push("CRITICAL: Transcription incomplete")
+    return { isValid: false, issues }
   }
 
-  // Enhanced repetition detection - much stricter
+  // CRITICAL: Much stricter repetition detection
   const words = text.toLowerCase().split(/\s+/)
   const uniqueWords = new Set(words)
   const repetitionRatio = uniqueWords.size / words.length
   
-  // Check for extreme repetition (hallucination indicator)
-  if (repetitionRatio < 0.1 && words.length > 20) {
-    issues.push("CRITICAL: Extreme repetition detected - transcript appears to be hallucinated")
+  // Immediate rejection for extreme repetition (hallucination indicator)
+  if (repetitionRatio < 0.15 && words.length > 20) {
+    issues.push("CRITICAL: Extreme repetition detected - clear hallucination")
     return { isValid: false, issues }
   }
   
-  if (repetitionRatio < 0.3 && words.length > 50) {
-    issues.push("High repetition detected, may indicate transcription errors")
+  // Stricter threshold for high repetition
+  if (repetitionRatio < 0.4 && words.length > 50) {
+    issues.push("CRITICAL: High repetition detected - likely transcription error")
+    return { isValid: false, issues }
   }
 
-  // Check for phrase repetition patterns
-  const text50 = text.substring(0, Math.min(50, text.length))
-  const restOfText = text.substring(50)
-  if (text.length > 100 && restOfText.includes(text50)) {
-    issues.push("CRITICAL: Identical phrase repetition detected - transcript is corrupted")
-    return { isValid: false, issues }
+  // CRITICAL: Check for phrase repetition patterns (50+ character phrases)
+  for (let i = 0; i < Math.min(3, text.length - 50); i++) {
+    const phraseLength = 50 + (i * 25) // Check 50, 75, 100 character phrases
+    const phrase = text.substring(i, Math.min(i + phraseLength, text.length))
+    const restOfText = text.substring(i + phraseLength)
+    
+    if (phrase.length >= 50 && restOfText.includes(phrase)) {
+      issues.push("CRITICAL: Identical phrase repetition detected - transcript corrupted")
+      return { isValid: false, issues }
+    }
+  }
+
+  // CRITICAL: Check for obvious AI hallucination patterns
+  const hallucination_patterns = [
+    /(.{20,})\s*\1\s*\1/i, // Same 20+ char phrase repeated 3+ times
+    /(terminologi[aeí].*){8,}/i, // "terminologia" repeated many times 
+    /(.{10,})\s*\1\s*\1\s*\1\s*\1/i, // Same 10+ char phrase repeated 5+ times
+  ]
+  
+  for (const pattern of hallucination_patterns) {
+    if (pattern.test(text)) {
+      issues.push("CRITICAL: Hallucination pattern detected - AI generated nonsense")
+      return { isValid: false, issues }
+    }
   }
 
   // Check for proper sentence structure
   const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0)
   if (sentences.length === 0 && text.length > 100) {
-    issues.push("No proper sentence structure detected")
+    issues.push("WARNING: No proper sentence structure detected")
   }
 
-  // For transcripts with critical issues, mark as invalid
+  // CRITICAL: Any critical issue means immediate rejection
   const hasCriticalIssues = issues.some(issue => issue.includes("CRITICAL"))
-  return { isValid: !hasCriticalIssues && issues.length < 3, issues }
+  return { isValid: !hasCriticalIssues, issues }
 }
 
 function generateTranscriptionPrompt(language: string, fileName?: string): string {
@@ -373,12 +430,12 @@ export async function POST(request: NextRequest) {
 
       // Add language for better accuracy
       if (meeting.language && meeting.language !== 'auto') {
-        transcriptionOptions.language = meeting.language
-        console.log(`Transcribing in specified language: ${meeting.language}`)
+        transcriptionOptions.language = normalizeLanguageCode(meeting.language)
+        console.log(`Transcribing in specified language: ${meeting.language} -> ${transcriptionOptions.language}`)
         
         // Add language-specific prompt for better results
         if (usePrompt) {
-          transcriptionOptions.prompt = generateTranscriptionPrompt(meeting.language, meeting.originalFileName || undefined)
+          transcriptionOptions.prompt = generateTranscriptionPrompt(transcriptionOptions.language, meeting.originalFileName || undefined)
         }
       } else {
         console.log('Auto-detecting language for transcription')
@@ -389,28 +446,95 @@ export async function POST(request: NextRequest) {
 
       console.log(`Starting ${qualityMode} transcription for meeting ${meetingId}`)
       
-      // Transcribe using Whisper with retry logic
+      // CRITICAL: Enhanced transcription with emergency fallback
       let transcription: any
       let retryCount = 0
-      const maxRetries = 2
+      const maxRetries = 3 // Increased retries
+      const emergencyOptions = [
+        // Standard attempt
+        { ...transcriptionOptions },
+        // Emergency attempt without language specification  
+        { ...transcriptionOptions, language: undefined, prompt: undefined },
+        // Emergency attempt with higher temperature
+        { ...transcriptionOptions, temperature: 0.2, language: undefined },
+        // Final attempt - minimal options
+        { file: transcriptionOptions.file, model: "whisper-1", response_format: "text", temperature: 0.3 }
+      ]
 
       while (retryCount <= maxRetries) {
         try {
-          transcription = await openai.audio.transcriptions.create(transcriptionOptions)
+          const currentOptions = emergencyOptions[Math.min(retryCount, emergencyOptions.length - 1)]
+          console.log(`Transcription attempt ${retryCount + 1}/${maxRetries + 1} with options:`, {
+            hasLanguage: !!currentOptions.language,
+            hasPrompt: !!currentOptions.prompt,
+            temperature: currentOptions.temperature,
+            format: currentOptions.response_format
+          })
+          
+          transcription = await openai.audio.transcriptions.create(currentOptions)
+          
+          // CRITICAL: Validate quality immediately after transcription
+          if (transcription.text) {
+            const qualityCheck = validateTranscriptionQuality(transcription.text, meeting.duration || 0)
+            
+            if (!qualityCheck.isValid) {
+              console.error(`Transcription attempt ${retryCount + 1} failed quality check:`, qualityCheck.issues)
+              
+              if (retryCount < maxRetries) {
+                console.log(`Retrying with emergency settings...`)
+                retryCount++
+                continue
+              } else {
+                // Final attempt failed - set meeting to ERROR status
+                await prisma.meeting.update({
+                  where: { id: meetingId },
+                  data: { 
+                    status: "ERROR",
+                    description: `Transcription failed quality validation: ${qualityCheck.issues.join(', ')}`
+                  },
+                })
+                
+                return NextResponse.json(
+                  { 
+                    error: "Transcription quality validation failed",
+                    details: qualityCheck.issues.join(', '),
+                    suggestion: "Please try uploading a clearer audio file or use a different quality mode"
+                  },
+                  { status: 500 }
+                )
+              }
+            } else {
+              console.log(`✅ Transcription passed quality validation on attempt ${retryCount + 1}`)
+              break // Success!
+            }
+          }
+          
           break
         } catch (error: any) {
           retryCount++
           console.error(`Transcription attempt ${retryCount} failed:`, error.message)
           
           if (retryCount > maxRetries) {
+            // Update meeting status to ERROR
+            await prisma.meeting.update({
+              where: { id: meetingId },
+              data: { 
+                status: "ERROR",
+                description: `Transcription failed after ${maxRetries + 1} attempts: ${error.message}`
+              },
+            })
             throw error
           }
           
-          // Wait before retry
-          await new Promise(resolve => setTimeout(resolve, 2000 * retryCount))
+          // Wait before retry (exponential backoff)  
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000))
           
           // Create new file stream for retry
-          transcriptionOptions.file = createReadStream(filePath)
+          emergencyOptions.forEach(option => {
+            if (option.file) {
+              option.file = createReadStream(filePath)
+            }
+          })
         }
       }
 
