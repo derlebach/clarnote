@@ -4,9 +4,14 @@ import OpenAI from "openai"
 import { createReadStream } from "fs"
 import { join } from "path"
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Initialize OpenAI client conditionally to prevent build failures
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY environment variable is not configured')
+  }
+  return new OpenAI({ apiKey })
+}
 
 // Post-processing utilities for improving transcription quality
 function cleanTranscript(text: string, language: string): string {
@@ -310,6 +315,15 @@ function mergeSimilarSpeakerSegments(segments: any[]): any[] {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: "OpenAI API key is not configured" },
+        { status: 500 }
+      )
+    }
+
+    const openai = getOpenAIClient()
     const { meetingId, qualityMode = 'accurate' } = await request.json()
 
     if (!meetingId) {

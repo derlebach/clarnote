@@ -3,12 +3,26 @@ import { prisma } from "@/lib/prisma"
 import OpenAI from "openai"
 import { getLanguageByCode } from "@/lib/utils"
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Initialize OpenAI client conditionally to prevent build failures
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY environment variable is not configured')
+  }
+  return new OpenAI({ apiKey })
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: "OpenAI API key is not configured" },
+        { status: 500 }
+      )
+    }
+
+    const openai = getOpenAIClient()
     const { meetingId } = await request.json()
 
     if (!meetingId) {
