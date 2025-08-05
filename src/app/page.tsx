@@ -53,6 +53,8 @@ export default function Home() {
                 width={127}
                 height={42}
                 className="h-8 w-auto"
+                priority
+                unoptimized
               />
             </div>
 
@@ -328,6 +330,7 @@ export default function Home() {
                 width={95}
                 height={31}
                 className="h-6 w-auto"
+                unoptimized
               />
             </div>
             

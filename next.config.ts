@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
     // Ignore ESLint errors during builds to prevent deployment failures
     ignoreDuringBuilds: true,
   },
+  images: {
+    // Enable unoptimized images for better compatibility
+    unoptimized: true,
+    // Add domains if loading external images
+    domains: [],
+    // Support for various image formats including SVG
+    formats: ['image/webp', 'image/avif'],
+  },
   ...(isMobileBuild && {
     output: 'export',
     outDir: 'out',
