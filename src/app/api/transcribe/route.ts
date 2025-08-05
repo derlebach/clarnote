@@ -153,31 +153,31 @@ function validateTranscriptionQuality(text: string, duration: number): { isValid
   const wordCount = text.trim().split(/\s+/).length
   const wordsPerSecond = wordCount / Math.max(duration, 1)
 
-  // Check for reasonable speech rate
-  if (wordsPerSecond > 8) {
-    issues.push("CRITICAL: Speech rate too fast - likely hallucination")
+  // Check for reasonable speech rate - RELAXED LIMITS for real speech
+  if (wordsPerSecond > 12) { // Increased from 8 - some people speak very fast
+    issues.push("CRITICAL: Speech rate extremely fast - likely hallucination")
     return { isValid: false, issues }
   }
-  if (wordsPerSecond < 0.3 && duration > 30) {
+  if (wordsPerSecond < 0.2 && duration > 60) { // Only flag if very long and very sparse
     issues.push("CRITICAL: Transcription incomplete")
     return { isValid: false, issues }
   }
 
-  // CRITICAL: Much stricter repetition detection
+  // CRITICAL: Much stricter repetition detection  
   const words = text.toLowerCase().split(/\s+/)
   const uniqueWords = new Set(words)
   const repetitionRatio = uniqueWords.size / words.length
   
   // Immediate rejection for extreme repetition (hallucination indicator)
-  if (repetitionRatio < 0.15 && words.length > 20) {
+  if (repetitionRatio < 0.1 && words.length > 20) { // Keep this strict - clear hallucination
     issues.push("CRITICAL: Extreme repetition detected - clear hallucination")
     return { isValid: false, issues }
   }
   
-  // Stricter threshold for high repetition
-  if (repetitionRatio < 0.4 && words.length > 50) {
-    issues.push("CRITICAL: High repetition detected - likely transcription error")
-    return { isValid: false, issues }
+  // More lenient threshold for high repetition
+  if (repetitionRatio < 0.25 && words.length > 100) { // Relaxed from 0.4
+    issues.push("WARNING: High repetition detected, may indicate transcription errors")
+    // Don't return false - just warn
   }
 
   // CRITICAL: Check for phrase repetition patterns (50+ character phrases)
@@ -444,48 +444,50 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      console.log(`Starting ${qualityMode} transcription for meeting ${meetingId}`)
-      
       // CRITICAL: Enhanced transcription with emergency fallback
       let transcription: any
       let retryCount = 0
-      const maxRetries = 3 // Increased retries
+      const maxRetries = 2 // Reduced from 3 to speed up process
       const emergencyOptions = [
         // Standard attempt
         { ...transcriptionOptions },
         // Emergency attempt without language specification  
         { ...transcriptionOptions, language: undefined, prompt: undefined },
-        // Emergency attempt with higher temperature
-        { ...transcriptionOptions, temperature: 0.2, language: undefined },
-        // Final attempt - minimal options
-        { file: transcriptionOptions.file, model: "whisper-1", response_format: "text", temperature: 0.3 }
+        // Final attempt - minimal options with higher temperature
+        { file: transcriptionOptions.file, model: "whisper-1", response_format: "text", temperature: 0.2 }
       ]
 
+      console.log(`🚀 Starting transcription for meeting ${meetingId} (${Math.round((meeting.fileSize || 0) / 1024 / 1024)}MB)`)
+      
       while (retryCount <= maxRetries) {
         try {
           const currentOptions = emergencyOptions[Math.min(retryCount, emergencyOptions.length - 1)]
-          console.log(`Transcription attempt ${retryCount + 1}/${maxRetries + 1} with options:`, {
+          console.log(`⏱️ Transcription attempt ${retryCount + 1}/${maxRetries + 1} with options:`, {
             hasLanguage: !!currentOptions.language,
             hasPrompt: !!currentOptions.prompt,
             temperature: currentOptions.temperature,
             format: currentOptions.response_format
           })
           
+          const startTime = Date.now()
           transcription = await openai.audio.transcriptions.create(currentOptions)
+          const transcriptionTime = (Date.now() - startTime) / 1000
+          console.log(`⚡ Transcription completed in ${transcriptionTime}s`)
           
           // CRITICAL: Validate quality immediately after transcription
           if (transcription.text) {
             const qualityCheck = validateTranscriptionQuality(transcription.text, meeting.duration || 0)
             
             if (!qualityCheck.isValid) {
-              console.error(`Transcription attempt ${retryCount + 1} failed quality check:`, qualityCheck.issues)
+              console.error(`❌ Transcription attempt ${retryCount + 1} failed quality check:`, qualityCheck.issues)
               
               if (retryCount < maxRetries) {
-                console.log(`Retrying with emergency settings...`)
+                console.log(`🔄 Retrying with emergency settings...`)
                 retryCount++
                 continue
               } else {
                 // Final attempt failed - set meeting to ERROR status
+                console.error(`🚨 All transcription attempts failed after ${maxRetries + 1} tries`)
                 await prisma.meeting.update({
                   where: { id: meetingId },
                   data: { 
@@ -498,7 +500,7 @@ export async function POST(request: NextRequest) {
                   { 
                     error: "Transcription quality validation failed",
                     details: qualityCheck.issues.join(', '),
-                    suggestion: "Please try uploading a clearer audio file or use a different quality mode"
+                    suggestion: "Please try uploading a clearer audio file or try a different quality mode"
                   },
                   { status: 500 }
                 )
@@ -512,10 +514,11 @@ export async function POST(request: NextRequest) {
           break
         } catch (error: any) {
           retryCount++
-          console.error(`Transcription attempt ${retryCount} failed:`, error.message)
+          console.error(`❌ Transcription attempt ${retryCount} failed:`, error.message)
           
           if (retryCount > maxRetries) {
             // Update meeting status to ERROR
+            console.error(`🚨 All transcription attempts failed with errors after ${maxRetries + 1} tries`)
             await prisma.meeting.update({
               where: { id: meetingId },
               data: { 
@@ -527,7 +530,9 @@ export async function POST(request: NextRequest) {
           }
           
           // Wait before retry (exponential backoff)  
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000))
+          const waitTime = Math.pow(2, retryCount) * 1000
+          console.log(`⏳ Waiting ${waitTime/1000}s before retry...`)
+          await new Promise(resolve => setTimeout(resolve, waitTime))
           
           // Create new file stream for retry
           emergencyOptions.forEach(option => {
