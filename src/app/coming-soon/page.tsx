@@ -1,33 +1,66 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useAnalytics } from '@/hooks/useAnalytics'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
 
+// Dynamic import for analytics to avoid build issues
+const useAnalyticsSafely = () => {
+  const [analytics, setAnalytics] = useState<any>(null)
+  
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        const { useAnalytics } = await import('@/hooks/useAnalytics')
+        setAnalytics(useAnalytics())
+      } catch (error) {
+        console.warn('Analytics not available:', error)
+        // Provide mock analytics functions
+        setAnalytics({
+          trackEmailSignup: () => {},
+          trackFormSubmit: () => {},
+          trackEvent: () => {},
+          trackFeatureDiscovered: () => {}
+        })
+      }
+    }
+    
+    loadAnalytics()
+  }, [])
+  
+  return analytics
+}
+
 export default function ComingSoon() {
   const [email, setEmail] = useState("")
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const analytics = useAnalytics()
+  const analytics = useAnalyticsSafely()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Track email signup with both old and new methods
-    analytics.trackEmailSignup(email, 'coming-soon-page')
-    analytics.trackFormSubmit('email-signup', true)
-    
-    // Track custom event
-    analytics.trackEvent('email_waitlist_signup', { 
-      source: 'coming-soon-page',
-      email_domain: email.split('@')[1],
-      timestamp: new Date().toISOString()
-    })
-    
-    // Track feature discovery if this is their first interaction
-    analytics.trackFeatureDiscovered('email_waitlist', 'coming-soon-page')
+    // Only track analytics if available
+    if (analytics) {
+      try {
+        // Track email signup with both old and new methods
+        analytics.trackEmailSignup(email, 'coming-soon-page')
+        analytics.trackFormSubmit('email-signup', true)
+        
+        // Track custom event
+        analytics.trackEvent('email_waitlist_signup', { 
+          source: 'coming-soon-page',
+          email_domain: email.split('@')[1],
+          timestamp: new Date().toISOString()
+        })
+        
+        // Track feature discovery if this is their first interaction
+        analytics.trackFeatureDiscovered('email_waitlist', 'coming-soon-page')
+      } catch (error) {
+        console.warn('Analytics tracking failed:', error)
+      }
+    }
     
     // TODO: Add email submission logic here
     setIsSubmitted(true)

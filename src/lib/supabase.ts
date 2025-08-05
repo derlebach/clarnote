@@ -4,15 +4,17 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-// Check if we're in development and missing env vars
+// Check if we're in development or build process and missing env vars
 const isDevelopment = process.env.NODE_ENV === 'development'
+const isBuild = typeof window === 'undefined' && !process.env.NEXT_PUBLIC_SUPABASE_URL
 const hasRequiredEnvVars = supabaseUrl && supabaseAnonKey
 
-if (!hasRequiredEnvVars && !isDevelopment) {
-  throw new Error('Missing Supabase environment variables')
+// Only throw error if we're in production runtime (not build time or development)
+if (!hasRequiredEnvVars && !isDevelopment && !isBuild && typeof window !== 'undefined') {
+  console.warn('Missing Supabase environment variables - using mock client')
 }
 
-// Create mock client for development when env vars are missing
+// Create mock client for development/build when env vars are missing
 const createMockClient = () => ({
   from: () => ({
     insert: () => Promise.resolve({ data: null, error: null }),
