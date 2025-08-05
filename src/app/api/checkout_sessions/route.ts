@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+// Initialize Stripe conditionally to prevent build errors
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 export async function POST(req: NextRequest) {
   try {
-    // Check if required environment variables are set
-    if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('STRIPE_SECRET_KEY is not set');
+    // Check if Stripe is properly configured
+    if (!process.env.STRIPE_SECRET_KEY || !stripe) {
+      console.error('STRIPE_SECRET_KEY is not set or Stripe not initialized');
       return NextResponse.json(
-        { error: 'Server configuration error' }, 
+        { error: 'Stripe not configured. Please check environment variables.' }, 
         { status: 500 }
       );
     }
