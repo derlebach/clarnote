@@ -96,7 +96,7 @@ export default function Footer() {
         </div>
         
         <div className="mt-8 pt-8 border-t text-center">
-          <p className="text-sm text-gray-600">© 2024 Clarnote. All rights reserved.</p>
+          <p className="text-sm text-gray-600">© 2025 Clarnote. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -188,7 +188,7 @@ export default function ComingSoon() {
             </div>
             
             <p className="text-sm text-gray-500">
-              © 2024 Clarnote. All rights reserved.
+              © 2025 Clarnote. All rights reserved.
             </p>
             
           </div>

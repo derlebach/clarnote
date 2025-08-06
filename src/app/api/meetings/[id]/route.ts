@@ -149,4 +149,69 @@ export async function PUT(
     console.error('Meeting Update API - Database error:', error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const session = await getServerSession(authOptions)
+  
+  console.log('Meeting DELETE API - Session check:', {
+    hasSession: !!session,
+    hasUser: !!session?.user,
+    userEmail: session?.user?.email,
+    userId: session?.user?.id,
+    requestedMeetingId: id
+  })
+
+  if (!session?.user?.email) {
+    console.error('Meeting DELETE API - No valid session or user email')
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  let userId = session.user.id
+  if (!userId) {
+    console.log('Meeting DELETE API - Looking up user by email:', session.user.email)
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+    if (user) {
+      userId = user.id
+    }
+  }
+
+  if (!userId) {
+    console.error('Meeting DELETE API - Could not determine user ID')
+    return NextResponse.json({ error: "User not found" }, { status: 404 })
+  }
+
+  try {
+    // First, check if the meeting exists and belongs to the user
+    const existingMeeting = await prisma.meeting.findFirst({
+      where: {
+        id: id,
+        userId: userId!,
+      }
+    })
+
+    if (!existingMeeting) {
+      console.error('Meeting DELETE API - Meeting not found or unauthorized:', id)
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 })
+    }
+
+    // Delete the meeting
+    await prisma.meeting.delete({
+      where: {
+        id: id,
+      }
+    })
+
+    console.log('Meeting DELETE API - Successfully deleted meeting:', id)
+    return NextResponse.json({ message: "Meeting deleted successfully" })
+  } catch (error) {
+    console.error('Meeting DELETE API - Database error:', error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
 } 

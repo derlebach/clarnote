@@ -50,6 +50,10 @@ model User {
   image         String?
   password      String?   // For email/password auth
   
+  // Password reset
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  
   // Subscription info
   subscriptionStatus String? @default("free") // free, trial, active, cancelled
   subscriptionEndDate DateTime?

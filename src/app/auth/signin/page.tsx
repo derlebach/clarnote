@@ -148,6 +148,16 @@ export default function SignIn() {
                 />
               </div>
 
+              <div className="flex items-center justify-between">
+                <label className="flex items-center">
+                  <input type="checkbox" className="mr-2 h-4 w-4 text-black focus:ring-black border-gray-300 rounded" />
+                  <span className="text-sm text-gray-600">Remember me</span>
+                </label>
+                <Link href="/auth/forgot-password" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  Forgot password?
+                </Link>
+              </div>
+
               <Button
                 type="submit"
                 className="w-full h-12"
