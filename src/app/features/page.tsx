@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import MobileMenu from '@/components/MobileMenu'
 
 export const metadata: Metadata = {
   title: 'Features - Clarnote | AI-Powered Meeting Assistant',
@@ -27,7 +28,9 @@ export default function Features() {
                 />
               </Link>
             </div>
-            <div className="hidden md:flex items-center space-x-8">
+            
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center space-x-8">
               <Link href="/features" className="text-gray-900 font-medium">
                 Features
               </Link>
@@ -38,7 +41,9 @@ export default function Features() {
                 About
               </Link>
             </div>
-            <div className="flex items-center space-x-4">
+            
+            {/* Desktop CTAs */}
+            <div className="hidden lg:flex items-center space-x-4">
               <Link
                 href="/auth/signin"
                 className="text-gray-600 hover:text-gray-900 font-medium"
@@ -49,46 +54,49 @@ export default function Features() {
                 href="/auth/signup"
                 className="bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors"
               >
-                Start Free Trial
+                Start Today
               </Link>
             </div>
+            
+            {/* Mobile Menu */}
+            <MobileMenu />
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-16 px-4 sm:px-6 lg:px-8">
+      <section className="pt-12 sm:pt-16 lg:pt-20 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-8">
-            Everything You Need to<br />
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-6 sm:mb-8">
+            Everything You Need to<br className="hidden sm:block" />
             <span className="text-gray-600">Make Meetings Matter</span>
           </h1>
-          <p className="text-xl sm:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 mb-8 sm:mb-12 max-w-3xl mx-auto">
             Powerful AI features that transform hours of meetings into minutes of actionable insights
           </p>
           
           {/* Hero Visual - Demo Preview */}
-          <div className="mb-12 max-w-4xl mx-auto">
-            <div className="bg-gray-50 rounded-2xl p-8 border">
-              <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="mb-8 sm:mb-12 max-w-4xl mx-auto">
+            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 lg:p-8 border">
+              <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
                 <div className="flex items-center mb-4">
                   <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
                   <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
                   <div className="w-3 h-3 bg-green-500 rounded-full mr-4"></div>
-                  <span className="text-sm text-gray-500">Meeting Transcript</span>
+                  <span className="text-xs sm:text-sm text-gray-500">Meeting Transcript</span>
                 </div>
                 <div className="space-y-3 text-left">
-                  <div className="flex items-start space-x-3">
-                    <span className="text-sm font-medium text-blue-600">Sarah Chen</span>
-                    <span className="text-sm text-gray-700">"Let's review the Q4 goals and discuss the marketing strategy..."</span>
+                  <div className="flex flex-col sm:flex-row sm:items-start space-y-1 sm:space-y-0 sm:space-x-3">
+                    <span className="text-xs sm:text-sm font-medium text-blue-600">Sarah Chen</span>
+                    <span className="text-xs sm:text-sm text-gray-700">"Let's review the Q4 goals and discuss the marketing strategy..."</span>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <span className="text-sm font-medium text-green-600">Mike Johnson</span>
-                    <span className="text-sm text-gray-700">"I think we should focus on the enterprise segment first..."</span>
+                  <div className="flex flex-col sm:flex-row sm:items-start space-y-1 sm:space-y-0 sm:space-x-3">
+                    <span className="text-xs sm:text-sm font-medium text-green-600">Mike Johnson</span>
+                    <span className="text-xs sm:text-sm text-gray-700">"I think we should focus on the enterprise segment first..."</span>
                   </div>
                   <div className="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400">
-                    <p className="text-sm font-medium text-yellow-800">🎯 Action Item</p>
-                    <p className="text-sm text-yellow-700">Mike to prepare enterprise strategy deck by Friday</p>
+                    <p className="text-xs sm:text-sm font-medium text-yellow-800">🎯 Action Item</p>
+                    <p className="text-xs sm:text-sm text-yellow-700">Mike to prepare enterprise strategy deck by Friday</p>
                   </div>
                 </div>
               </div>
@@ -98,36 +106,36 @@ export default function Features() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link
               href="/auth/signup"
-              className="bg-black text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-800 transition-colors"
+              className="bg-black text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg hover:bg-gray-800 transition-colors"
             >
-              Start Free Trial
+              Start Today
             </Link>
-            <button className="border border-gray-300 text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-50 transition-colors">
-              Watch 2-min Demo
+            <button className="border border-gray-300 text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg hover:bg-gray-50 transition-colors">
+              Get the App
             </button>
           </div>
           
-          <p className="text-sm text-gray-500">
-            No credit card required • 14-day free trial
+          <p className="text-xs sm:text-sm text-gray-500">
+            No credit card required • Free forever • Upgrade to Pro anytime
           </p>
         </div>
       </section>
 
       {/* Core Features Grid */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
               Core Features
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
               Everything you need to transform your meetings from time-wasters into productivity boosters
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {/* Feature 1: AI Transcription */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow">
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-lg transition-shadow">
               <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
                 <svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
@@ -540,12 +548,12 @@ export default function Features() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Link
               href="/auth/signup"
-              className="bg-white text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors"
+              className="bg-white text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg hover:bg-gray-100 transition-colors"
             >
-              Start Your Free Trial
+              Start Today
             </Link>
-            <button className="border border-gray-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-800 transition-colors">
-              Schedule a Demo
+            <button className="border border-gray-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg hover:bg-gray-800 transition-colors">
+              Get the App
             </button>
           </div>
           
@@ -560,7 +568,7 @@ export default function Features() {
               <svg className="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              14-day free trial
+              Free forever
             </div>
             <div className="flex items-center">
               <svg className="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -571,60 +579,6 @@ export default function Features() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-white border-t py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <Image
-                src="/logo.svg"
-                alt="Clarnote Logo"
-                width={140}
-                height={32}
-                className="mb-4"
-                unoptimized
-              />
-              <p className="text-gray-600 text-sm">
-                AI-powered meeting assistant that transforms conversations into actionable insights.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-4">Product</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="/features" className="hover:text-gray-900">Features</Link></li>
-                <li><Link href="/pricing" className="hover:text-gray-900">Pricing</Link></li>
-                <li><Link href="/integrations" className="hover:text-gray-900">Integrations</Link></li>
-                <li><Link href="/api" className="hover:text-gray-900">API</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="/about" className="hover:text-gray-900">About</Link></li>
-                <li><Link href="/blog" className="hover:text-gray-900">Blog</Link></li>
-                <li><Link href="/careers" className="hover:text-gray-900">Careers</Link></li>
-                <li><Link href="/contact" className="hover:text-gray-900">Contact</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-4">Legal</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="/privacy" className="hover:text-gray-900">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-gray-900">Terms of Service</Link></li>
-                <li><Link href="/security" className="hover:text-gray-900">Security</Link></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t mt-12 pt-8 text-center text-sm text-gray-600">
-            <p>&copy; 2024 Clarnote. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 } 

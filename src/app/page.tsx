@@ -6,6 +6,7 @@ import { useAnalytics } from '@/hooks/useAnalytics'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
+import MobileMenu from "@/components/MobileMenu"
 
 export default function Home() {
   const [showAppModal, setShowAppModal] = useState(false)
@@ -41,11 +42,16 @@ export default function Home() {
       setShowAppModal(true)
     }
   }
+  
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f7f8f9] via-[#f2f3f5] to-[#eef1f4]">
       {/* Navigation */}
-      <nav className="backdrop-blur-sm bg-white/60 border-b border-gray-200/30">
-        <div className="max-w-6xl mx-auto px-8 py-4">
+      <nav className="backdrop-blur-sm bg-white/60 border-b border-gray-200/30 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center space-x-2">
@@ -65,21 +71,30 @@ export default function Home() {
               )}
             </div>
 
-            {/* Navigation Links */}
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="#features" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+            {/* Desktop Navigation Links */}
+            <div className="hidden lg:flex items-center space-x-8">
+              <button 
+                onClick={() => scrollToSection('features')} 
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+              >
                 Features
-              </Link>
-              <Link href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+              </button>
+              <button 
+                onClick={() => scrollToSection('pricing')} 
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+              >
                 Pricing
-              </Link>
-              <Link href="#about" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+              </button>
+              <button 
+                onClick={() => scrollToSection('about')} 
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+              >
                 About
-              </Link>
+              </button>
             </div>
 
-            {/* CTA Buttons */}
-            <div className="flex items-center space-x-3">
+            {/* Desktop CTA Buttons */}
+            <div className="hidden lg:flex items-center space-x-3">
               <Link href="/auth/signin">
                 <button className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
                   Sign in
@@ -87,16 +102,19 @@ export default function Home() {
               </Link>
               <Link href="/auth/signup">
                 <button className="bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors">
-                  Get started
+                  Start Today
                 </button>
               </Link>
             </div>
+
+            {/* Mobile Menu */}
+            <MobileMenu />
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="max-w-6xl mx-auto px-8 pt-20 pb-16">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 lg:pt-20 pb-12 sm:pb-16">
         <div className="text-center max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
             AI-Powered
@@ -125,13 +143,13 @@ export default function Home() {
           </div>
           
           <p className="text-sm text-gray-500">
-            No credit card required • 14-day free trial
+            No credit card required • Free forever • Upgrade to Pro anytime
           </p>
         </div>
       </section>
 
       {/* How it Works - 3 Steps */}
-      <section className="max-w-6xl mx-auto px-8 py-20">
+      <section id="features" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             How it works
@@ -190,7 +208,7 @@ export default function Home() {
       </section>
 
       {/* Features Grid */}
-      <section className="max-w-6xl mx-auto px-8 py-20">
+      <section id="pricing" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Why choose Clarnote
@@ -294,7 +312,7 @@ export default function Home() {
       </section>
 
       {/* Final CTA */}
-      <section className="max-w-6xl mx-auto px-8 py-20">
+      <section id="about" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="bg-white/60 border border-gray-200/50 rounded-3xl p-12 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Ready to transform your meetings?

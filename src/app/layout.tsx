@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "./providers";
 import MobileTouchOptimizer from "@/components/MobileTouchOptimizer";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Clarnote - AI-Powered Meeting Assistant",
@@ -33,10 +34,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body className="antialiased min-h-screen flex flex-col">
         <Providers>
           <MobileTouchOptimizer>
-            {children}
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
           </MobileTouchOptimizer>
         </Providers>
       </body>
