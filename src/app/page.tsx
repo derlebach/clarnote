@@ -21,31 +21,14 @@ export default function Home() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     
     if (isMobile) {
-      // Auto-redirect mobile users to appropriate store
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-      const isAndroid = /Android/.test(navigator.userAgent)
-      
-      if (isIOS) {
-        analytics.trackAppDownload('ios')
-        window.open('https://apps.apple.com', '_blank')
-      } else if (isAndroid) {
-        analytics.trackAppDownload('android')
-        window.open('https://play.google.com/store', '_blank')
-      } else {
-        // Fallback for other mobile devices - show modal
-        analytics.trackModalOpen('app-download')
-        setShowAppModal(true)
-      }
+      // Mobile users go directly to app store or PWA
+      window.open('https://app.clarnote.com', '_blank')
     } else {
       // Desktop users see the modal
       analytics.trackModalOpen('app-download')
       setShowAppModal(true)
     }
   }
-  
-  const scrollToSection = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f7f8f9] via-[#f2f3f5] to-[#eef1f4]">
@@ -73,24 +56,24 @@ export default function Home() {
 
             {/* Desktop Navigation Links */}
             <div className="hidden lg:flex items-center space-x-8">
-              <button 
-                onClick={() => scrollToSection('features')} 
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+              <Link 
+                href="/features"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Features
-              </button>
-              <button 
-                onClick={() => scrollToSection('pricing')} 
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+              </Link>
+              <Link 
+                href="/pricing"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Pricing
-              </button>
-              <button 
-                onClick={() => scrollToSection('about')} 
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+              </Link>
+              <Link 
+                href="/about"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
                 About
-              </button>
+              </Link>
             </div>
 
             {/* Desktop CTA Buttons */}
@@ -143,7 +126,7 @@ export default function Home() {
           </div>
           
           <p className="text-sm text-gray-500">
-            No credit card required • Free forever • Upgrade to Pro anytime
+            No credit card required • Upgrade to Pro anytime
           </p>
         </div>
       </section>
