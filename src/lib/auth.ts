@@ -5,7 +5,26 @@ import GoogleProvider from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
 import { prisma } from "./prisma"
 
-// Validate required environment variables
+// Validate required environment variables at runtime
+function validateAuthEnvironment() {
+  const requiredEnvVars = {
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  }
+
+  const missingRequired = Object.entries(requiredEnvVars)
+    .filter(([key, value]) => !value)
+    .map(([key]) => key)
+
+  if (missingRequired.length > 0) {
+    console.error('Missing required environment variables:', missingRequired.join(', '))
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`Missing required environment variables: ${missingRequired.join(', ')}`)
+    }
+  }
+}
+
+// Get environment variables
 const requiredEnvVars = {
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
@@ -14,18 +33,6 @@ const requiredEnvVars = {
 const optionalEnvVars = {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-}
-
-// Check if required env vars are present
-const missingRequired = Object.entries(requiredEnvVars)
-  .filter(([key, value]) => !value)
-  .map(([key]) => key)
-
-if (missingRequired.length > 0) {
-  console.error('Missing required environment variables:', missingRequired.join(', '))
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(`Missing required environment variables: ${missingRequired.join(', ')}`)
-  }
 }
 
 // Build providers array
@@ -60,6 +67,9 @@ providers.push(
       password: { label: "Password", type: "password" }
     },
     async authorize(credentials) {
+      // Validate environment at runtime when auth is actually used
+      validateAuthEnvironment()
+      
       if (!credentials?.email || !credentials?.password) {
         throw new Error("Missing email or password")
       }
@@ -104,7 +114,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: requiredEnvVars.NEXTAUTH_SECRET,
+  secret: requiredEnvVars.NEXTAUTH_SECRET || 'fallback-secret-for-build',
   pages: {
     signIn: "/auth/signin",
     error: "/auth/error",
@@ -112,6 +122,9 @@ export const authOptions: NextAuthOptions = {
   providers,
   callbacks: {
     async jwt({ token, user, account }) {
+      // Validate environment at runtime
+      validateAuthEnvironment()
+      
       if (user) {
         token.id = user.id
         token.email = user.email
