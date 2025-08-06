@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["jsonProtocol"]
 }
 
 datasource db {
@@ -28,6 +29,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -36,6 +38,9 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([expires])
 }
 
 model User {
@@ -45,12 +50,24 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?   // For email/password auth
+  
+  // Subscription info
+  subscriptionStatus String? @default("free") // free, trial, active, cancelled
+  subscriptionEndDate DateTime?
+  
+  // Usage limits
+  monthlyTranscriptionMinutes Int @default(0)
+  monthlyTranscriptionLimit Int @default(300) // 5 hours for free tier
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   accounts Account[]
   sessions Session[]
   meetings Meeting[]
+  
+  @@index([email])
+  @@index([createdAt])
 }
 
 model VerificationToken {
@@ -59,6 +76,7 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+  @@index([expires])
 }
 
 // Clarnote Models
@@ -78,6 +96,8 @@ model Meeting {
   // Processing status
   status           MeetingStatus @default(UPLOADED)
   transcriptionId  String?
+  processingError  String? // Store error messages for debugging
+  retryCount       Int @default(0)
   
   // AI generated content
   transcript       String?
@@ -87,6 +107,10 @@ model Meeting {
   actionItems      String? // JSON string of action items
   followUpEmail    String?
   
+  // Quality metrics
+  transcriptionQuality Float? // 0.0 to 1.0 quality score
+  processingTime       Int?   // Time taken to process in seconds
+  
   // Metadata
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,7 +118,10 @@ model Meeting {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([status])
   @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([userId, status])
 }
 
 enum MeetingStatus {
@@ -104,4 +131,5 @@ enum MeetingStatus {
   GENERATING_SUMMARY
   COMPLETED
   ERROR
+  CANCELLED
 }

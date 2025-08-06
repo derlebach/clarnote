@@ -9,15 +9,26 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/error",
   },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      },
+      // Allow both localhost and production URLs
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: "credentials",
@@ -27,65 +38,107 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          throw new Error("Missing email or password")
         }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
+        try {
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email
+            }
+          })
+
+          if (!user || !user.password) {
+            throw new Error("Invalid email or password")
           }
-        })
 
-        if (!user || !user.password) {
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          )
+
+          if (!isPasswordValid) {
+            throw new Error("Invalid email or password")
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+          }
+        } catch (error) {
+          console.error("Auth error:", error)
           return null
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
         }
       }
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id
+        token.email = user.email
+      }
+      if (account) {
+        token.accessToken = account.access_token
+        token.provider = account.provider
       }
       return token
     },
     async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub
-      } else if (session.user && token.id) {
-        session.user.id = token.id as string
+      if (session.user) {
+        session.user.id = token.sub || (token.id as string)
+        session.user.email = token.email as string
       }
       return session
     },
-    async redirect({ url, baseUrl }) {
-      // Always redirect to localhost in development
-      if (process.env.NODE_ENV === 'development') {
-        if (url.startsWith('/')) return `${baseUrl}${url}`
-        if (url.includes('localhost:3001')) return url
-        return baseUrl
+    async signIn({ user, account, profile }) {
+      // Allow OAuth sign-ins
+      if (account?.provider === "google") {
+        return true
       }
+      
+      // Allow credentials sign-ins
+      if (account?.provider === "credentials") {
+        return true
+      }
+      
+      return false
+    },
+    async redirect({ url, baseUrl }) {
+      // Handle mobile app redirects
+      if (url.startsWith("capacitor://")) {
+        return url
+      }
+      
+      // Always redirect to localhost:3001 in development
+      if (process.env.NODE_ENV === 'development') {
+        const devBaseUrl = 'http://localhost:3001'
+        if (url.startsWith('/')) return `${devBaseUrl}${url}`
+        if (url.includes('localhost:3001')) return url
+        return devBaseUrl
+      }
+      
       // Production redirect logic
       if (url.startsWith('/')) return `${baseUrl}${url}`
-      if (new URL(url).origin === baseUrl) return url
+      if (url.startsWith(baseUrl)) return url
+      
+      // Allow redirects to the same domain
+      try {
+        const urlObj = new URL(url)
+        const baseUrlObj = new URL(baseUrl)
+        if (urlObj.hostname === baseUrlObj.hostname) {
+          return url
+        }
+      } catch {
+        // Invalid URL, redirect to base
+      }
+      
       return baseUrl
     }
-  }
+  },
+  debug: process.env.NODE_ENV === 'development',
 }
 
 export async function hashPassword(password: string): Promise<string> {
