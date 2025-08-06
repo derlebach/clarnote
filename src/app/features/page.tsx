@@ -24,14 +24,6 @@ export default function Features() {
                   height={32}
                   priority
                   unoptimized
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const textFallback = document.createElement('span');
-                    textFallback.className = 'text-2xl font-bold text-gray-900';
-                    textFallback.textContent = 'Clarnote';
-                    target.parentNode?.appendChild(textFallback);
-                  }}
                 />
               </Link>
             </div>
@@ -592,14 +584,6 @@ export default function Features() {
                 height={32}
                 className="mb-4"
                 unoptimized
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const textFallback = document.createElement('span');
-                  textFallback.className = 'text-2xl font-bold text-gray-900';
-                  textFallback.textContent = 'Clarnote';
-                  target.parentNode?.appendChild(textFallback);
-                }}
               />
               <p className="text-gray-600 text-sm">
                 AI-powered meeting assistant that transforms conversations into actionable insights.
