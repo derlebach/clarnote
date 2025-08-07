@@ -108,7 +108,7 @@ const queueRecordingImport = async (recordingData: ZoomRecordingData) => {
         duration: Math.round(recordingData.duration),
         hostEmail: recordingData.host_email,
         participantCount: recordingData.recording_count || 1,
-        recordingFiles: recordingData.recording_files,
+        recordingFiles: recordingData.recording_files as any,
         status: 'importing'
       }
     })
@@ -122,7 +122,7 @@ const queueRecordingImport = async (recordingData: ZoomRecordingData) => {
           zoomMeetingId: recordingData.id,
           userId: user.id,
           recordingFiles: recordingData.recording_files
-        },
+        } as any,
         priority: 1 // High priority for new recordings
       }
     })

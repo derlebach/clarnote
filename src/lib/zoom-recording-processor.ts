@@ -301,11 +301,11 @@ export const processQueuedJobs = async () => {
       // Process based on job type
       switch (job.jobType) {
         case 'zoom_recording_import':
-          await processRecording(job.jobData as ProcessingJob)
+          await processRecording(job.jobData as unknown as ProcessingJob)
           break
         
         case 'zoom_recording_retry':
-          const retryData = job.jobData as { recordingId: string; retryCount: number }
+          const retryData = job.jobData as unknown as { recordingId: string; retryCount: number }
           const recording = await prisma.zoomRecording.findUnique({
             where: { id: retryData.recordingId }
           })
@@ -315,7 +315,7 @@ export const processQueuedJobs = async () => {
               recordingId: recording.id,
               zoomMeetingId: recording.zoomMeetingId,
               userId: recording.userId,
-              recordingFiles: recording.recordingFiles as ZoomRecordingFile[]
+              recordingFiles: recording.recordingFiles as any as ZoomRecordingFile[]
             })
           }
           break

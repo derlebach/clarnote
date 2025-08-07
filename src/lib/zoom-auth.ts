@@ -175,7 +175,7 @@ export const getValidAccessToken = async (userId: string): Promise<string> => {
     userId,
     zoomAccountId: integration.zoomAccountId,
     accessToken: newAccessToken,
-    refreshToken: integration.refreshToken,
+    refreshToken: integration.refreshToken || undefined,
     expiresAt: new Date(Date.now() + 3600 * 1000) // 1 hour from now
   })
 
