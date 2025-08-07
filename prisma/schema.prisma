@@ -68,6 +68,8 @@ model User {
   accounts Account[]
   sessions Session[]
   meetings Meeting[]
+  zoomIntegrations ZoomIntegration[]
+  zoomRecordings ZoomRecording[]
   
   @@index([email])
   @@index([createdAt])
@@ -135,4 +137,85 @@ enum MeetingStatus {
   COMPLETED
   ERROR
   CANCELLED
+}
+
+model ZoomIntegration {
+  id                        String    @id @default(cuid())
+  userId                    String
+  zoomAccountId            String
+  accessTokenEncrypted     String
+  refreshTokenEncrypted    String?
+  tokenExpiresAt           DateTime?
+  webhookVerificationToken String?
+  autoImportEnabled        Boolean   @default(true)
+  lastSyncAt               DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  // Relations
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recordings ZoomRecording[]
+
+  // Indexes
+  @@unique([userId, zoomAccountId])
+  @@index([userId])
+  @@index([zoomAccountId])
+}
+
+model ZoomRecording {
+  id                    String    @id @default(cuid())
+  zoomMeetingId        String    @unique
+  zoomRecordingId      String
+  userId               String
+  zoomIntegrationId    String
+  meetingTopic         String?
+  startTime            DateTime?
+  duration             Int?      // in minutes
+  hostEmail            String?
+  participantCount     Int?
+  recordingFiles       Json?     // array of file metadata
+  transcriptionJobId   String?
+  transcriptionStatus  String    @default("pending") // pending, processing, completed, failed
+  transcriptionText    String?
+  transcriptionSummary String?
+  actionItems          Json?     // extracted action items
+  speakers             Json?     // speaker diarization data
+  processingError      String?
+  retryCount           Int       @default(0)
+  status               String    @default("importing") // importing, processing, completed, failed
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // Relations
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zoomIntegration ZoomIntegration @relation(fields: [zoomIntegrationId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([zoomMeetingId])
+  @@index([userId])
+  @@index([startTime])
+  @@index([transcriptionStatus])
+  @@index([status])
+  @@index([userId, startTime])
+}
+
+model ProcessingQueue {
+  id          String    @id @default(cuid())
+  jobType     String    // zoom_import, transcription, etc.
+  jobData     Json      // job-specific data
+  status      String    @default("pending") // pending, processing, completed, failed
+  priority    Int       @default(0)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  error       String?
+  scheduledAt DateTime  @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Indexes
+  @@index([status, priority])
+  @@index([jobType])
+  @@index([scheduledAt])
 }
