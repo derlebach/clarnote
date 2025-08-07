@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { signIn, getSession } from "next-auth/react"
+import { signIn, getSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -22,18 +22,31 @@ export default function SignIn() {
     setError("")
 
     try {
+      console.log("Attempting sign-in with:", { email, password: password ? "***" : "empty" })
+      
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       })
 
+      console.log("Sign-in result:", { error: result?.error, ok: result?.ok, status: result?.status, url: result?.url })
+
       if (result?.error) {
+        console.error("Sign-in error:", result.error)
         setError("Invalid email or password")
-      } else {
+      } else if (result?.ok) {
+        console.log("Sign-in successful, redirecting to dashboard")
+        // Double-check session before redirecting
+        const session = await getSession()
+        console.log("Session after sign-in:", session)
         router.push("/dashboard")
+      } else {
+        console.log("Unexpected result:", result)
+        setError("An unexpected error occurred")
       }
     } catch (error) {
+      console.error("Sign-in exception:", error)
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
@@ -47,6 +60,16 @@ export default function SignIn() {
     } catch (error) {
       setError("An error occurred with Google sign-in")
       setIsLoading(false)
+    }
+  }
+
+  const clearSession = async () => {
+    try {
+      await signOut({ redirect: false })
+      setError("")
+      console.log("Session cleared")
+    } catch (error) {
+      console.error("Error clearing session:", error)
     }
   }
 
@@ -76,8 +99,21 @@ export default function SignIn() {
           </CardHeader>
           <CardContent className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                {error}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-sm text-red-800">{error}</p>
+                    <button 
+                      onClick={clearSession}
+                      className="mt-2 text-xs text-red-600 hover:text-red-800 underline"
+                    >
+                      Clear session and try again
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
