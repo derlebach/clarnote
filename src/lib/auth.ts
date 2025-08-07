@@ -71,29 +71,40 @@ providers.push(
       validateAuthEnvironment()
       
       if (!credentials?.email || !credentials?.password) {
-        throw new Error("Missing email or password")
+        console.error("Auth error: Missing email or password")
+        return null
       }
 
       try {
+        console.log("Attempting to find user with email:", credentials.email)
+        
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email
           }
         })
 
+        console.log("User lookup result:", { found: !!user, hasPassword: !!(user?.password) })
+
         if (!user || !user.password) {
-          throw new Error("Invalid email or password")
+          console.error("Auth error: User not found or no password")
+          return null
         }
 
+        console.log("Comparing password...")
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.password
         )
 
+        console.log("Password comparison result:", isPasswordValid)
+
         if (!isPasswordValid) {
-          throw new Error("Invalid email or password")
+          console.error("Auth error: Invalid password")
+          return null
         }
 
+        console.log("Authentication successful for user:", user.email)
         return {
           id: user.id,
           email: user.email,
@@ -101,7 +112,8 @@ providers.push(
           image: user.image,
         }
       } catch (error) {
-        console.error("Auth error:", error)
+        console.error("Database error during auth:", error)
+        // Only return null for database errors, not authentication errors
         return null
       }
     }
