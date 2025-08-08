@@ -39,7 +39,8 @@ export async function POST(
     })
 
     // Trigger new transcription
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3001'
+    const requestOrigin = (() => { try { return new URL(request.url).origin } catch { return undefined } })()
+    const baseUrl = process.env.NEXTAUTH_URL || requestOrigin || ''
     fetch(`${baseUrl}/api/transcribe`, {
       method: "POST",
       headers: {

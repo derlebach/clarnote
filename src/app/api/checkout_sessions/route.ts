@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${req.headers.get('origin') || 'http://localhost:3001'}/success`,
-      cancel_url: `${req.headers.get('origin') || 'http://localhost:3001'}/cancel`,
+      success_url: `${req.headers.get('origin') || process.env.NEXTAUTH_URL}/success`,
+      cancel_url: `${req.headers.get('origin') || process.env.NEXTAUTH_URL}/cancel`,
       // Optional: Add customer email and metadata
       // customer_email: 'customer@example.com',
       // metadata: {

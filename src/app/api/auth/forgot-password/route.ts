@@ -32,13 +32,17 @@ export async function POST(request: Request) {
       data: {
         resetToken,
         resetTokenExpiry,
-      },
+      } as any,
     });
 
     // For now, just log the reset URL (you can implement email sending later)
-    const resetUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3001'}/auth/reset-password?token=${resetToken}`;
-    console.log(`Password reset link for ${email}: ${resetUrl}`);
-
+    const headerOrigin = request.headers.get('origin')
+    const urlOrigin = (() => { try { return new URL(request.url).origin } catch { return undefined } })()
+    const origin = headerOrigin || urlOrigin || process.env.NEXTAUTH_URL
+    const baseUrl = origin && origin.startsWith('http') ? origin : (process.env.NEXTAUTH_URL || '')
+    const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`
+    console.log(`Password reset link for ${email}: ${resetUrl}`)
+    
     // TODO: Implement email sending
     // await sendEmail({
     //   to: email,
