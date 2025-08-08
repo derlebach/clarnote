@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     try {
       existingUser = await prisma.user.findUnique({
         where: { email },
-        select: { id: true, email: true }
+        select: { id: true, email: true, password: true, name: true }
       })
 
     } catch (dbError: any) {
@@ -97,11 +97,38 @@ export async function POST(request: NextRequest) {
     }
 
     if (existingUser) {
-      console.warn(`⚠️  User already exists with email: ${email}`)
+      // If the user exists but has no password (likely created via OAuth), set the password now
+      if (!existingUser.password) {
+        console.log("🔄 Existing OAuth-only user found. Setting password and updating name if needed...")
+        try {
+          const hashed = await hashPassword(password)
+          const updated = await prisma.user.update({
+            where: { id: existingUser.id },
+            data: { password: hashed, name: existingUser.name || fullName }
+          })
+          console.log("✅ Password set for existing user:", updated.id)
+          return NextResponse.json(
+            {
+              success: true,
+              message: "Account updated. You can now sign in with email and password.",
+              user: { id: updated.id, email: updated.email, name: updated.name }
+            },
+            { status: 200 }
+          )
+        } catch (updateErr: any) {
+          console.error("❌ Failed to set password for existing user:", updateErr)
+          return NextResponse.json(
+            { error: "Account update failed", message: "Unable to set password. Please try again." },
+            { status: 500 }
+          )
+        }
+      }
+
+      console.warn(`⚠️  User already exists with email (has password): ${email}`)
       return NextResponse.json(
         { 
           error: "User already exists",
-          message: "An account with this email address already exists" 
+          message: "An account with this email address already exists. Please sign in or use Forgot password." 
         },
         { status: 409 }
       )
