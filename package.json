@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push && next build",
+    "build": "next build",
+    "build:production": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "build:mobile": "BUILD_MODE=mobile prisma generate && BUILD_MODE=mobile next build && npx cap sync",
