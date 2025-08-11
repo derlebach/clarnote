@@ -5,201 +5,141 @@ import GoogleProvider from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
 import { prisma } from "./prisma"
 
-// Validate required environment variables at runtime
+// Resolve envs (v5-style with fallback to v4 names)
+const AUTH_URL = process.env.AUTH_URL || process.env.NEXTAUTH_URL
+const AUTH_SECRET = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
+const AUTH_TRUST_HOST = process.env.AUTH_TRUST_HOST === "true"
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
+
+const isProd = process.env.NODE_ENV === "production"
+
+// Canonical base URL (comes from Vercel env)
+const baseUrl = AUTH_URL?.replace(/\/+$/, "") || "http://localhost:3001"
+
+// If you want to allow both www and apex, keep both in ALLOWED_HOSTS
+const ALLOWED_HOSTS = new Set([
+  "www.clarnote.com",
+  "clarnote.com", 
+  "staging.clarnote.com",
+  "localhost",
+  "localhost:3001",
+])
+
+// One-time sanity log on boot (server only)
+if (typeof window === "undefined") {
+  // Keep logs concise in production
+  console.log("[auth:init]", {
+    authUrl: !!AUTH_URL,
+    authSecret: !!AUTH_SECRET,
+    google: !!GOOGLE_CLIENT_ID,
+    trustHost: AUTH_TRUST_HOST,
+    nodeEnv: process.env.NODE_ENV,
+  })
+}
+
+// Validate required environment variables at runtime when code paths execute
 function validateAuthEnvironment() {
-  const requiredEnvVars = {
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-  }
-
-  const missingRequired = Object.entries(requiredEnvVars)
-    .filter(([key, value]) => !value)
-    .map(([key]) => key)
-
-  if (missingRequired.length > 0) {
-    console.error('Missing required environment variables:', missingRequired.join(', '))
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(`Missing required environment variables: ${missingRequired.join(', ')}`)
-    }
+  const missing: string[] = []
+  if (!AUTH_SECRET) missing.push("AUTH_SECRET/NEXTAUTH_SECRET")
+  if (!AUTH_URL) missing.push("AUTH_URL/NEXTAUTH_URL")
+  if (missing.length > 0 && process.env.NODE_ENV === "production") {
+    console.error("Missing required environment variables:", missing.join(", "))
+    throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
   }
 }
 
-// Get environment variables
-const requiredEnvVars = {
-  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-}
+// Build providers
+const providers: any[] = []
 
-const optionalEnvVars = {
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-}
-
-// Build providers array
-const providers = []
-
-// Add Google provider only if credentials are available
-if (optionalEnvVars.GOOGLE_CLIENT_ID && optionalEnvVars.GOOGLE_CLIENT_SECRET) {
+if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
   providers.push(
     GoogleProvider({
-      clientId: optionalEnvVars.GOOGLE_CLIENT_ID,
-      clientSecret: optionalEnvVars.GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
-        }
-      },
+      clientId: GOOGLE_CLIENT_ID,
+      clientSecret: GOOGLE_CLIENT_SECRET,
+      authorization: { params: { prompt: "consent", access_type: "offline", response_type: "code" } },
       allowDangerousEmailAccountLinking: true,
     })
   )
 } else {
-  console.warn('Google OAuth credentials not found. Google authentication will be disabled.')
+  console.warn("[auth:init] Google credentials missing; Google provider disabled")
 }
 
-// Always add credentials provider
 providers.push(
   CredentialsProvider({
     name: "credentials",
     credentials: {
       email: { label: "Email", type: "email" },
-      password: { label: "Password", type: "password" }
+      password: { label: "Password", type: "password" },
     },
     async authorize(credentials) {
-      // Validate environment at runtime when auth is actually used
       validateAuthEnvironment()
-      
-      if (!credentials?.email || !credentials?.password) {
-        console.error("Auth error: Missing email or password")
-        return null
-      }
-
+      if (!credentials?.email || !credentials?.password) return null
       try {
-        console.log("Attempting to find user with email:", credentials.email)
-        
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
-        })
-
-        console.log("User lookup result:", { found: !!user, hasPassword: !!(user?.password) })
-
-        if (!user || !user.password) {
-          console.error("Auth error: User not found or no password")
-          return null
-        }
-
-        console.log("Comparing password...")
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
-
-        console.log("Password comparison result:", isPasswordValid)
-
-        if (!isPasswordValid) {
-          console.error("Auth error: Invalid password")
-          return null
-        }
-
-        console.log("Authentication successful for user:", user.email)
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-        }
-      } catch (error) {
-        console.error("Database error during auth:", error)
-        // Only return null for database errors, not authentication errors
+        const user = await prisma.user.findUnique({ where: { email: credentials.email } })
+        if (!user || !user.password) return null
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+        if (!isPasswordValid) return null
+        return { id: user.id, email: user.email, name: user.name, image: user.image }
+      } catch {
         return null
       }
-    }
+    },
   })
 )
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  secret: requiredEnvVars.NEXTAUTH_SECRET || 'fallback-secret-for-build',
-  pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
-  },
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
+  secret: AUTH_SECRET || "fallback-secret-for-build",
+  pages: { signIn: "/auth/signin", error: "/auth/error" },
   providers,
+  // Make cookies secure in production and scoped to the parent domain
+  cookies: isProd
+    ? {
+        sessionToken: {
+          name: "__Secure-next-auth.session-token",
+          options: {
+            httpOnly: true,
+            sameSite: "lax",
+            path: "/",
+            secure: true,
+            domain: ".clarnote.com", // works for www and apex
+          },
+        },
+      }
+    : undefined,
   callbacks: {
     async jwt({ token, user, account }) {
-      // Validate environment at runtime
       validateAuthEnvironment()
-      
       if (user) {
-        token.id = user.id
-        token.email = user.email
+        token.id = (user as any).id
+        token.email = (user as any).email
       }
       if (account) {
-        token.accessToken = account.access_token
-        token.provider = account.provider
+        ;(token as any).accessToken = (account as any).access_token
+        ;(token as any).provider = (account as any).provider
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.sub || (token.id as string)
-        session.user.email = token.email as string
+        ;(session.user as any).id = (token.sub as string) || ((token as any).id as string)
+        ;(session.user as any).email = (token as any).email as string
       }
       return session
     },
-    async signIn({ user, account, profile }) {
-      // Allow OAuth sign-ins
-      if (account?.provider === "google") {
-        return true
-      }
-      
-      // Allow credentials sign-ins
-      if (account?.provider === "credentials") {
-        return true
-      }
-      
-      return false
-    },
-    async redirect({ url, baseUrl }) {
-      // Handle mobile app redirects
-      if (url.startsWith("capacitor://")) {
-        return url
-      }
-      
-      // Always redirect to localhost:3001 in development
-      if (process.env.NODE_ENV === 'development') {
-        const devBaseUrl = 'http://localhost:3001'
-        if (url.startsWith('/')) return `${devBaseUrl}${url}`
-        if (url.includes('localhost:3001')) return url
-        return devBaseUrl
-      }
-      
-      // Production redirect logic
-      if (url.startsWith('/')) return `${baseUrl}${url}`
-      if (url.startsWith(baseUrl)) return url
-      
-      // Allow redirects to the same domain
+    // Avoid open redirects; force final destination to our own hosts
+    async redirect({ url, baseUrl: _ }) {
       try {
-        const urlObj = new URL(url)
-        const baseUrlObj = new URL(baseUrl)
-        if (urlObj.hostname === baseUrlObj.hostname) {
-          return url
-        }
-      } catch {
-        // Invalid URL, redirect to base
-      }
-      
-      return baseUrl
-    }
+        const u = new URL(url, baseUrl)
+        if (ALLOWED_HOSTS.has(u.host)) return u.toString()
+      } catch (_) {}
+      return baseUrl // default safe fallback
+    },
   },
-  debug: process.env.NODE_ENV === 'development'
+  debug: process.env.NODE_ENV === "development",
+  // Note: trustHost is handled via AUTH_TRUST_HOST env var in NextAuth v4
 }
 
 export async function hashPassword(password: string): Promise<string> {

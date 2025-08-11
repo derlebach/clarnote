@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma db push && next build",
     "start": "next start",
     "lint": "next lint",
     "build:mobile": "BUILD_MODE=mobile prisma generate && BUILD_MODE=mobile next build && npx cap sync",
@@ -22,7 +22,8 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "db:deploy": "prisma migrate deploy",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "sync:config": "npx tsx scripts/sync-config.ts"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.2",
