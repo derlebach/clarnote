@@ -24,8 +24,8 @@ export default function SignIn() {
     try {
       console.log("Attempting emergency sign-in with:", { email, password: password ? "***" : "empty" })
       
-      // Use emergency sign-in endpoint instead of NextAuth
-      const response = await fetch("/api/auth/signin-emergency", {
+      // Use ultimate sign-in endpoint (bypasses everything)
+      const response = await fetch("/api/auth/signin-ultimate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
