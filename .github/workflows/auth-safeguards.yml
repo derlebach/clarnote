@@ -1,0 +1,55 @@
+name: Auth Safeguards
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  deployment_status:
+
+jobs:
+  audit-env:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: ENV audit (prod)
+        env:
+          NEXTAUTH_URL: https://www.clarnote.com
+          AUTH_TRUST_HOST: true
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: npm run audit:env
+
+  smoke-prod:
+    runs-on: ubuntu-latest
+    needs: audit-env
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Auth smoke (prod)
+        env:
+          AUTH_TEST_URL: https://www.clarnote.com
+        run: npm run test:auth:prod
+
+  smoke-staging:
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Auth smoke (staging)
+        env:
+          AUTH_TEST_URL: https://staging.clarnote.com
+        run: npm run test:auth:staging 
