@@ -22,31 +22,30 @@ export default function SignIn() {
     setError("")
 
     try {
-      console.log("Attempting sign-in with:", { email, password: password ? "***" : "empty" })
+      console.log("Attempting emergency sign-in with:", { email, password: password ? "***" : "empty" })
       
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
+      // Use emergency sign-in endpoint instead of NextAuth
+      const response = await fetch("/api/auth/signin-emergency", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       })
 
-      console.log("Sign-in result:", { error: result?.error, ok: result?.ok, status: result?.status, url: result?.url })
+      const data = await response.json()
+      console.log("Emergency sign-in result:", data)
 
-      if (result?.error) {
-        console.error("Sign-in error:", result.error)
-        setError("Invalid email or password")
-      } else if (result?.ok) {
-        console.log("Sign-in successful, redirecting to dashboard")
-        // Double-check session before redirecting
-        const session = await getSession()
-        console.log("Session after sign-in:", session)
-        router.push("/dashboard")
+      if (response.ok && data.success) {
+        console.log("Emergency sign-in successful, redirecting to dashboard")
+        // Force a page reload to pick up the new session cookie
+        window.location.href = "/dashboard"
       } else {
-        console.log("Unexpected result:", result)
-        setError("An unexpected error occurred")
+        console.error("Emergency sign-in error:", data.error)
+        setError(data.error || "Invalid email or password")
       }
     } catch (error) {
-      console.error("Sign-in exception:", error)
+      console.error("Emergency sign-in exception:", error)
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
