@@ -75,13 +75,52 @@ providers.push(
     async authorize(credentials) {
       validateAuthEnvironment()
       if (!credentials?.email || !credentials?.password) return null
+      
       try {
-        const user = await prisma.user.findUnique({ where: { email: credentials.email } })
-        if (!user || !user.password) return null
+        // Emergency: Use Supabase REST API directly (bypass Prisma)
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        
+        if (!supabaseUrl || !supabaseKey) {
+          console.error("Missing Supabase credentials for emergency auth")
+          return null
+        }
+
+        // Fetch user from Supabase
+        const response = await fetch(`${supabaseUrl}/rest/v1/User?email=eq.${credentials.email}`, {
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!response.ok) {
+          console.error("Failed to fetch user from Supabase:", response.status)
+          return null
+        }
+
+        const users = await response.json()
+        const user = users[0]
+        
+        if (!user || !user.password) {
+          return null
+        }
+
+        // Verify password
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-        if (!isPasswordValid) return null
-        return { id: user.id, email: user.email, name: user.name, image: user.image }
-      } catch {
+        if (!isPasswordValid) {
+          return null
+        }
+
+        return { 
+          id: user.id, 
+          email: user.email, 
+          name: user.name, 
+          image: user.image 
+        }
+      } catch (error) {
+        console.error("Emergency auth error:", error)
         return null
       }
     },
@@ -89,7 +128,8 @@ providers.push(
 )
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Emergency: Disable Prisma adapter to avoid connection issues
+  // adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   secret: AUTH_SECRET || "fallback-secret-for-build",
   pages: { signIn: "/auth/signin", error: "/auth/error" },
