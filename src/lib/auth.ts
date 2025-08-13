@@ -86,6 +86,8 @@ providers.push(
           return null
         }
 
+        console.log("[emergency-auth] Attempting login for:", credentials.email)
+
         // Fetch user from Supabase
         const response = await fetch(`${supabaseUrl}/rest/v1/User?email=eq.${credentials.email}`, {
           headers: {
@@ -95,23 +97,34 @@ providers.push(
           }
         })
 
+        console.log("[emergency-auth] Supabase response status:", response.status)
+
         if (!response.ok) {
           console.error("Failed to fetch user from Supabase:", response.status)
           return null
         }
 
         const users = await response.json()
+        console.log("[emergency-auth] Found users:", users.length)
+        
         const user = users[0]
         
         if (!user || !user.password) {
+          console.log("[emergency-auth] No user found or no password")
           return null
         }
 
+        console.log("[emergency-auth] User found, verifying password...")
+
         // Verify password
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+        console.log("[emergency-auth] Password valid:", isPasswordValid)
+        
         if (!isPasswordValid) {
           return null
         }
+
+        console.log("[emergency-auth] Login successful for:", user.email)
 
         return { 
           id: user.id, 
