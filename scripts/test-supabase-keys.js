@@ -7,14 +7,13 @@ const supabaseUrl = 'https://wimumucfuvgqbfwqnwyy.supabase.co';
 // Different API keys to test (you'll need to provide the real ones)
 const keysToTest = [
   {
-    name: 'Current Production Key',
+    name: 'FRESH API Key (2025)',
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbXVtdWNmdXZncWJmd3Fud3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyODQwMDQsImV4cCI6MjA2OTg2MDAwNH0.JuGwGspyVmN5BTdpYFvH-Ty1o4KQKz6T31zVADIN7UM'
+  },
+  {
+    name: 'Old Production Key (2024)',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbXVtdWNmdXZncWJmd3Fubnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4MDcwNjQsImV4cCI6MjA1MjM4MzA2NH0.VBg7CWCrUK9_4Y4W8s7KAD6yvAH1ksKTqRYnL3Ywsxw'
   }
-  // Add more keys here if you have them:
-  // {
-  //   name: 'Fresh Key from Dashboard',  
-  //   key: 'eyJ...' // Paste fresh key here
-  // }
 ];
 
 async function testSupabaseKey(name, apiKey) {
