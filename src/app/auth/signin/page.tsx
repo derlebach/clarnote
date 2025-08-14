@@ -24,8 +24,8 @@ export default function SignIn() {
     try {
       console.log("Attempting emergency sign-in with:", { email, password: password ? "***" : "empty" })
       
-      // Use ultimate sign-in endpoint (bypasses everything)
-      const response = await fetch("/api/auth/signin-ultimate", {
+      // Use the primary sign-in endpoint
+      const response = await fetch("/api/auth/signin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
