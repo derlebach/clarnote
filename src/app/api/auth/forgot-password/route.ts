@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
+import { sendEmail, emailTemplates } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
@@ -35,26 +36,26 @@ export async function POST(request: Request) {
       } as any,
     });
 
-    // For now, just log the reset URL (you can implement email sending later)
+    // Generate reset URL
     const headerOrigin = request.headers.get('origin')
     const urlOrigin = (() => { try { return new URL(request.url).origin } catch { return undefined } })()
     const origin = headerOrigin || urlOrigin || process.env.NEXTAUTH_URL
     const baseUrl = origin && origin.startsWith('http') ? origin : (process.env.NEXTAUTH_URL || '')
     const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`
-    console.log(`Password reset link for ${email}: ${resetUrl}`)
     
-    // TODO: Implement email sending
-    // await sendEmail({
-    //   to: email,
-    //   subject: 'Reset your Clarnote password',
-    //   html: `
-    //     <h2>Reset Your Password</h2>
-    //     <p>You requested to reset your password. Click the link below to create a new password:</p>
-    //     <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 8px;">Reset Password</a>
-    //     <p>This link will expire in 1 hour.</p>
-    //     <p>If you didn't request this, please ignore this email.</p>
-    //   `,
-    // });
+    // Send password reset email
+    try {
+      const resetTemplate = emailTemplates.passwordReset(resetUrl, user.name || 'User')
+      await sendEmail({
+        to: email,
+        subject: resetTemplate.subject,
+        html: resetTemplate.html
+      })
+      console.log('📧 Password reset email sent to:', email)
+    } catch (emailError) {
+      console.error('❌ Password reset email failed:', emailError)
+      // Still return success for security, but log the error
+    }
 
     return successResponse;
   } catch (error) {

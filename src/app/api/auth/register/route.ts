@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
+import { sendEmail, emailTemplates } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   console.log('📝 Registration attempt started')
@@ -108,6 +109,20 @@ export async function POST(req: NextRequest) {
     const createdUser = Array.isArray(newUser) ? newUser[0] : newUser
 
     console.log('✅ User created successfully:', createdUser.id)
+
+    // Send welcome email
+    try {
+      const welcomeTemplate = emailTemplates.welcome(createdUser.name)
+      await sendEmail({
+        to: createdUser.email,
+        subject: welcomeTemplate.subject,
+        html: welcomeTemplate.html
+      })
+      console.log('📧 Welcome email sent to:', createdUser.email)
+    } catch (emailError) {
+      console.log('⚠️ Welcome email failed (but registration succeeded):', emailError)
+      // Don't fail registration if email fails
+    }
 
     return NextResponse.json({
       success: true,
