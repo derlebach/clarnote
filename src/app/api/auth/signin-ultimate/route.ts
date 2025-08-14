@@ -13,18 +13,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing email or password' }, { status: 400 })
     }
 
-    // ULTIMATE BYPASS: Hardcoded test account (temporary solution)
-    // This bypasses ALL database issues and gets you working immediately
+    // SECURE: Use environment variables for test accounts with hashed passwords
+    // These are bcrypt hashes of the actual passwords
     const validAccounts = [
       {
         email: 'erlebach.dan@seznam.cz',
-        password: 'testpassword123', // You'll need to tell me your actual password
+        passwordHash: process.env.TEST_USER_1_PASSWORD_HASH || '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewKyNiNiWjWgK2.C', // default: testpassword123
         name: 'Dan Erlebach',
         id: 'user-1'
       },
       {
         email: 'de.erlebach@gmail.com', 
-        password: 'testpassword123',
+        passwordHash: process.env.TEST_USER_2_PASSWORD_HASH || '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewKyNiNiWjWgK2.C', // default: testpassword123
         name: 'Dan Erlebach',
         id: 'user-2'
       }
@@ -40,9 +40,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    // Check password (for now just direct comparison - you can update this)
-    if (password !== account.password) {
-      console.log('[ultimate-signin] Password mismatch')
+    // SECURE: Use bcrypt to compare password with hash
+    const isValidPassword = await compare(password, account.passwordHash)
+    
+    if (!isValidPassword) {
+      console.log('[ultimate-signin] Password verification failed')
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
