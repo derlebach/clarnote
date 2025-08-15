@@ -37,10 +37,10 @@ export const emailTemplates = {
         <meta charset="utf-8">
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; max-width: 600px; margin: 0 auto; }
-          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: white; padding: 40px 20px; }
-          .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-radius: 0 0 8px 8px; }
-          .button { display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; margin: 20px 0; }
+          .header { background: #000000; color: white; padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: white; padding: 40px 20px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; }
+          .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none; }
+          .button { display: inline-block; padding: 12px 24px; background: #000000; color: white; text-decoration: none; border-radius: 8px; margin: 20px 0; }
         </style>
       </head>
       <body>
@@ -86,11 +86,11 @@ export const emailTemplates = {
         <meta charset="utf-8">
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; max-width: 600px; margin: 0 auto; }
-          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: white; padding: 40px 20px; }
-          .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-radius: 0 0 8px 8px; }
-          .button { display: inline-block; padding: 12px 24px; background: #dc2626; color: white; text-decoration: none; border-radius: 8px; margin: 20px 0; }
-          .warning { background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0; }
+          .header { background: #000000; color: white; padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: white; padding: 40px 20px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; }
+          .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none; }
+          .button { display: inline-block; padding: 12px 24px; background: #000000; color: white; text-decoration: none; border-radius: 8px; margin: 20px 0; }
+          .warning { background: #f3f4f6; padding: 15px; border-radius: 8px; border-left: 4px solid #6b7280; margin: 20px 0; }
         </style>
       </head>
       <body>
@@ -136,14 +136,14 @@ export const emailTemplates = {
         <meta charset="utf-8">
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; max-width: 600px; margin: 0 auto; }
-          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: white; padding: 30px 20px; }
+          .header { background: #000000; color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: white; padding: 30px 20px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; }
           .section { margin-bottom: 30px; }
-          .summary { background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; }
-          .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-radius: 0 0 8px 8px; }
+          .summary { background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e5e7eb; }
+          .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none; }
           ul { padding-left: 20px; }
           li { margin-bottom: 8px; }
-          .action-item { background: #fef3c7; padding: 10px; border-radius: 6px; margin: 8px 0; border-left: 4px solid #f59e0b; }
+          .action-item { background: #f3f4f6; padding: 10px; border-radius: 6px; margin: 8px 0; border-left: 4px solid #6b7280; }
         </style>
       </head>
       <body>
@@ -179,7 +179,7 @@ export const emailTemplates = {
 
           <div class="section">
             <p>View the full meeting details and transcript in your dashboard:</p>
-            <a href="https://www.clarnote.com/meeting/${meeting.id}" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 8px;">View Meeting</a>
+            <a href="https://www.clarnote.com/meeting/${meeting.id}" style="display: inline-block; padding: 12px 24px; background: #000000; color: white; text-decoration: none; border-radius: 8px;">View Meeting</a>
           </div>
         </div>
         

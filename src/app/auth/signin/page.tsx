@@ -22,30 +22,26 @@ export default function SignIn() {
     setError("")
 
     try {
-      console.log("Attempting emergency sign-in with:", { email, password: password ? "***" : "empty" })
+      console.log("Attempting NextAuth credentials sign-in with:", { email, password: password ? "***" : "empty" })
       
-      // Use the primary sign-in endpoint
-      const response = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+      // Use NextAuth's signIn function with credentials provider
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false, // Don't redirect automatically
       })
 
-      const data = await response.json()
-      console.log("Emergency sign-in result:", data)
+      console.log("NextAuth sign-in result:", result)
 
-      if (response.ok && data.success) {
-        console.log("Emergency sign-in successful, redirecting to dashboard")
-        // Force a page reload to pick up the new session cookie
-        window.location.href = "/dashboard"
+      if (result?.ok && !result?.error) {
+        console.log("Sign-in successful, redirecting to dashboard")
+        router.push("/dashboard")
       } else {
-        console.error("Emergency sign-in error:", data.error)
-        setError(data.error || "Invalid email or password")
+        console.error("Sign-in error:", result?.error)
+        setError(result?.error || "Invalid email or password")
       }
     } catch (error) {
-      console.error("Emergency sign-in exception:", error)
+      console.error("Sign-in exception:", error)
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
