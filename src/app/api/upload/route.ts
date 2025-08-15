@@ -5,6 +5,10 @@ import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { validateAudioFile, isValidLanguageCode } from "@/lib/utils"
 
+// Configure the route to handle large request bodies
+export const runtime = 'nodejs'
+export const maxDuration = 60 // 60 seconds timeout for uploads
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)

@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   experimental: {
     serverActions: {
-      bodySizeLimit: '50mb', // Allow up to 50MB file uploads
+      bodySizeLimit: '100mb', // Allow up to 100MB file uploads
     },
     ...(isMobileBuild && {
       esmExternals: 'loose'
