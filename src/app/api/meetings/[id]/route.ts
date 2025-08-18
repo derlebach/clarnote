@@ -23,21 +23,40 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  // Get user ID from database and ensure user exists
   let userId = session.user.id
-  if (!userId) {
-    console.log('Meeting API - Looking up user by email:', session.user.email)
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+  let user = null
+  
+  if (userId) {
+    // Check if user exists in database
+    user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true }
     })
-    if (user) {
-      userId = user.id
-    }
   }
-
-  if (!userId) {
-    console.error('Meeting API - Could not determine user ID')
-    return NextResponse.json({ error: "User not found" }, { status: 404 })
+  
+  if (!user) {
+    // Try to find user by email
+    user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, email: true }
+    })
   }
+  
+  if (!user) {
+    // Create user if they don't exist
+    console.log('Meeting API - Creating new user:', session.user.email)
+    user = await prisma.user.create({
+      data: {
+        email: session.user.email,
+        name: session.user.name || null,
+        image: session.user.image || null,
+      },
+      select: { id: true, email: true }
+    })
+  }
+  
+  userId = user.id
 
   try {
     const meeting = await prisma.meeting.findFirst({
@@ -88,21 +107,40 @@ export async function PUT(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  // Get user ID from database and ensure user exists
   let userId = session.user.id
-  if (!userId) {
-    console.log('Meeting Update API - Looking up user by email:', session.user.email)
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+  let user = null
+  
+  if (userId) {
+    // Check if user exists in database
+    user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true }
     })
-    if (user) {
-      userId = user.id
-    }
   }
-
-  if (!userId) {
-    console.error('Meeting Update API - Could not determine user ID')
-    return NextResponse.json({ error: "User not found" }, { status: 404 })
+  
+  if (!user) {
+    // Try to find user by email
+    user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, email: true }
+    })
   }
+  
+  if (!user) {
+    // Create user if they don't exist
+    console.log('Meeting Update API - Creating new user:', session.user.email)
+    user = await prisma.user.create({
+      data: {
+        email: session.user.email,
+        name: session.user.name || null,
+        image: session.user.image || null,
+      },
+      select: { id: true, email: true }
+    })
+  }
+  
+  userId = user.id
 
   try {
     const body = await req.json()
@@ -171,21 +209,40 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  // Get user ID from database and ensure user exists
   let userId = session.user.id
-  if (!userId) {
-    console.log('Meeting DELETE API - Looking up user by email:', session.user.email)
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+  let user = null
+  
+  if (userId) {
+    // Check if user exists in database
+    user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true }
     })
-    if (user) {
-      userId = user.id
-    }
   }
-
-  if (!userId) {
-    console.error('Meeting DELETE API - Could not determine user ID')
-    return NextResponse.json({ error: "User not found" }, { status: 404 })
+  
+  if (!user) {
+    // Try to find user by email
+    user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, email: true }
+    })
   }
+  
+  if (!user) {
+    // Create user if they don't exist
+    console.log('Meeting DELETE API - Creating new user:', session.user.email)
+    user = await prisma.user.create({
+      data: {
+        email: session.user.email,
+        name: session.user.name || null,
+        image: session.user.image || null,
+      },
+      select: { id: true, email: true }
+    })
+  }
+  
+  userId = user.id
 
   try {
     // First, check if the meeting exists and belongs to the user

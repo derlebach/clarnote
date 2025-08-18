@@ -1,284 +1,157 @@
-import { Metadata } from 'next'
-import Link from 'next/link'
-import Image from 'next/image'
-import MobileMenu from '@/components/MobileMenu'
+"use client"
 
-export const metadata: Metadata = {
-  title: 'About - Clarnote | Every Meeting Has Value',
-  description: 'Born from the frustration of lost insights and forgotten action items, Clarnote transforms how professionals handle meetings. Save 5+ hours weekly with AI-powered transcription.',
-  keywords: 'about clarnote, meeting assistant, AI transcription, productivity tool, meeting notes',
-}
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+import Navbar from '@/components/Navbar';
 
-export default function AboutPage() {
+export default function About() {
+  const router = useRouter()
+  
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="flex items-center">
-                <Image
-                  src="/logo.svg"
-                  alt="Clarnote Logo"
-                  width={140}
-                  height={32}
-                  priority
-                  unoptimized
-                />
-              </Link>
-            </div>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-8">
-              <Link href="/features" className="text-gray-600 hover:text-gray-900">
-                Features
-              </Link>
-              <Link href="/pricing" className="text-gray-600 hover:text-gray-900">
-                Pricing
-              </Link>
-              <Link href="/about" className="text-gray-900 font-medium">
-                About
-              </Link>
-            </div>
-            
-            {/* Desktop CTAs */}
-            <div className="hidden lg:flex items-center space-x-4">
-              <Link
-                href="/auth/signin"
-                className="text-gray-600 hover:text-gray-900 font-medium"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors"
-              >
-                Start Today
-              </Link>
-            </div>
-            
-            {/* Mobile Menu */}
-            <MobileMenu />
-          </div>
-        </div>
-      </nav>
-
+      <Navbar />
       {/* Hero Section */}
-      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 text-center">
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-gray-900">
-            Every Meeting Has Value.<br />
-            We Help You Capture It.
+          <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-8 text-center">
+            Every Meeting Has Value.
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-gray-600 to-gray-900">
+              We Capture It Perfectly.
+            </span>
           </h1>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
-            Born from the frustration of lost insights and forgotten action items, 
-            Clarnote transforms how professionals handle meetings.
+          
+          <p className="text-xl text-gray-600 mb-8 text-center max-w-3xl mx-auto">
+            Most meeting tools promise "good enough" transcription. We set out to build something better — 
+            a world-class engine that exceeds human transcriptionists.
+          </p>
+          
+          <p className="text-lg text-gray-700 mb-12 text-center font-semibold">
+            With Clarnote, you don't just record meetings — you unlock their full value.
           </p>
         </div>
       </section>
 
-      {/* Problem/Solution Section */}
-      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-gray-900">
-                The Hidden Cost of Bad Meeting Notes
-              </h2>
-              <div className="space-y-4 text-gray-600 text-base sm:text-lg">
-                <p>
-                  The average professional spends <strong>31 hours per month</strong> in meetings. 
-                  Yet 73% of meeting decisions are forgotten within a week.
-                </p>
-                <p>
-                  Manual note-taking captures only 30% of what's discussed. Important context, 
-                  tone, and nuances disappear the moment the meeting ends.
-                </p>
-                <p>
-                  That's millions of valuable insights lost. Decisions unmade. Actions untaken. 
-                  Opportunities missed.
-                </p>
+      {/* Benefits */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
+              <h3 className="text-lg font-semibold mb-2">Never miss a critical detail</h3>
+              <p className="text-gray-600">99.9% accuracy captures every word, decision, and nuance</p>
             </div>
-            <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
-              <h3 className="font-bold text-xl mb-4">Without Clarnote:</h3>
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <span className="text-red-500 mr-2 text-lg">✗</span>
-                  <span>5+ hours weekly on meeting documentation</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-red-500 mr-2 text-lg">✗</span>
-                  <span>Key decisions lost in notebooks</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-red-500 mr-2 text-lg">✗</span>
-                  <span>Follow-ups delayed by days</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-red-500 mr-2 text-lg">✗</span>
-                  <span>Team misalignment from poor records</span>
-                </li>
-              </ul>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Build a searchable knowledge base</h3>
+              <p className="text-gray-600">Transform meetings into organizational intelligence</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Save hours of note-taking every week</h3>
+              <p className="text-gray-600">Focus on the conversation, not documentation</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Impress clients with flawless documentation</h3>
+              <p className="text-gray-600">Professional transcripts that reflect your standards</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12 text-gray-900">
-            Brilliantly Simple. Powerfully Effective.
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                1
-              </div>
-              <h3 className="font-bold text-xl mb-3">Record Once</h3>
-              <p className="text-gray-600">
-                Upload any meeting recording. Audio or video. Any language. Any length.
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                2
-              </div>
-              <h3 className="font-bold text-xl mb-3">AI Does the Heavy Lifting</h3>
-              <p className="text-gray-600">
-                Our AI transcribes, analyzes, and extracts what matters in seconds, not hours.
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                3
-              </div>
-              <h3 className="font-bold text-xl mb-3">Act with Confidence</h3>
-              <p className="text-gray-600">
-                Get clear summaries, action items, and follow-ups ready to share instantly.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12 text-gray-900">
-            Transform Your Professional Life
-          </h2>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div>
-              <h3 className="font-bold text-xl mb-3">Save 5+ Hours Weekly</h3>
-              <p className="text-gray-600">
-                Stop writing, start listening. Be fully present while AI captures everything.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-bold text-xl mb-3">Never Miss Critical Details</h3>
-              <p className="text-gray-600">
-                Every decision, commitment, and insight preserved with perfect accuracy.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-bold text-xl mb-3">Follow Up in Seconds</h3>
-              <p className="text-gray-600">
-                Professional summaries and action items ready to send before you leave the room.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-bold text-xl mb-3">Build Institutional Knowledge</h3>
-              <p className="text-gray-600">
-                Searchable archive of every meeting. Find any discussion instantly.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-bold text-xl mb-3">Improve Team Alignment</h3>
-              <p className="text-gray-600">
-                Everyone gets the same clear record. No more "that's not what I heard."
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-bold text-xl mb-3">Look More Professional</h3>
-              <p className="text-gray-600">
-                Impress clients and colleagues with thorough, timely meeting documentation.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust Section */}
-      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-gray-900">
-            Built for Professionals Who Value Their Time
-          </h2>
-          <p className="text-lg sm:text-xl text-gray-600 mb-8">
-            Trusted by consultants, project managers, sales teams, and executives 
-            who refuse to let valuable insights slip away.
+      {/* Mission Statement */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Our Mission</h2>
+          <p className="text-xl text-gray-700 leading-relaxed">
+            To make every meeting actionable. No decision lost. No insight forgotten. 
+            <span className="block mt-4 font-semibold">
+              Only clarity, confidence, and productivity.
+            </span>
           </p>
+        </div>
+      </section>
+
+      {/* Technology */}
+      <section className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Built Different. Built Better.</h2>
+            <p className="text-lg text-gray-600">Our transcription engine sets the global standard</p>
+          </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center mb-12">
-            <div>
-              <div className="text-3xl font-bold text-gray-900">10K+</div>
-              <div className="text-gray-600">Active Users</div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-gray-50 rounded-2xl p-6">
+              <h3 className="text-xl font-semibold mb-3">Advanced AI Models</h3>
+              <p className="text-gray-600">
+                Powered by state-of-the-art speech recognition that continuously learns and improves
+              </p>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-gray-900">1M+</div>
-              <div className="text-gray-600">Meetings Processed</div>
+            
+            <div className="bg-gray-50 rounded-2xl p-6">
+              <h3 className="text-xl font-semibold mb-3">Multi-Language Excellence</h3>
+              <p className="text-gray-600">
+                20+ languages with the same exceptional quality — no compromise, no exceptions
+              </p>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-gray-900">99.9%</div>
-              <div className="text-gray-600">Accuracy Rate</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-gray-900">5hrs</div>
-              <div className="text-gray-600">Saved Weekly</div>
+            
+            <div className="bg-gray-50 rounded-2xl p-6">
+              <h3 className="text-xl font-semibold mb-3">Human-Like Understanding</h3>
+              <p className="text-gray-600">
+                Context-aware processing that understands nuance, technical terms, and industry jargon
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Mission Section */}
-      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-black text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-            Our Mission
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-br from-gray-900 to-gray-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-4xl font-bold text-white mb-6">
+            Experience the Gold Standard in Transcription
           </h2>
-          <p className="text-lg sm:text-xl opacity-90 mb-8">
-            To ensure no valuable insight is ever lost in a meeting again. 
-            We believe better meeting documentation leads to better decisions, 
-            stronger relationships, and more successful outcomes.
+          <p className="text-xl text-gray-300 mb-8">
+            Join thousands of teams who've upgraded to truly accurate meeting intelligence
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/auth/signup" 
-              className="bg-white text-black px-6 sm:px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-            >
-              Start Today
+            <Link href="/auth/signin">
+              <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-6 text-lg rounded-full">
+                Start Free Trial
+              </Button>
             </Link>
-            <Link 
-              href="/features" 
-              className="border border-white text-white px-6 sm:px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-black transition-colors"
-            >
-              See Features
+            <Link href="/">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 py-6 text-lg rounded-full transition-all"
+              >
+                Learn More
+              </Button>
             </Link>
           </div>
         </div>
       </section>
     </div>
-  );
+  )
 } 

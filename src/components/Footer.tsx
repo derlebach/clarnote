@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function Footer() {
+  const year = new Date().getFullYear();
   return (
     <footer className="bg-white border-t mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -9,17 +9,10 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="space-y-4">
             <div className="flex items-center">
-              <Image
-                src="/logo.svg"
-                alt="Clarnote"
-                width={140}
-                height={32}
-                priority
-                unoptimized
-              />
+              <span className="text-2xl font-bold text-gray-900">Clarnote</span>
             </div>
             <p className="text-sm text-gray-600">
-              AI-powered meeting assistant that transforms conversations into actionable insights.
+              The World's Most Accurate AI Meeting Assistant
             </p>
           </div>
           
@@ -50,7 +43,7 @@ export default function Footer() {
             </ul>
           </div>
           
-          {/* Company Section - NO CAREERS */}
+          {/* Company Section */}
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
             <ul className="space-y-2">
@@ -96,7 +89,7 @@ export default function Footer() {
         </div>
         
         <div className="mt-8 pt-8 border-t text-center">
-          <p className="text-sm text-gray-600">© 2025 Clarnote. All rights reserved.</p>
+          <p className="text-sm text-gray-600">© {year} Clarnote. All rights reserved.</p>
         </div>
       </div>
     </footer>

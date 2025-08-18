@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import MobileMenu from '@/components/MobileMenu'
+import Navbar from '@/components/Navbar';
 
 export const metadata: Metadata = {
   title: 'Pricing - Clarnote | Simple, Transparent Pricing',
@@ -12,58 +13,7 @@ export const metadata: Metadata = {
 export default function Pricing() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="flex items-center">
-                <Image
-                  src="/logo.svg"
-                  alt="Clarnote Logo"
-                  width={140}
-                  height={32}
-                  priority
-                  unoptimized
-                />
-              </Link>
-            </div>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-8">
-              <Link href="/features" className="text-gray-600 hover:text-gray-900">
-                Features
-              </Link>
-              <Link href="/pricing" className="text-gray-900 font-medium">
-                Pricing
-              </Link>
-              <Link href="/about" className="text-gray-600 hover:text-gray-900">
-                About
-              </Link>
-            </div>
-            
-            {/* Desktop CTAs */}
-            <div className="hidden lg:flex items-center space-x-4">
-              <Link
-                href="/auth/signin"
-                className="text-gray-600 hover:text-gray-900 font-medium"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors"
-              >
-                Start Today
-              </Link>
-            </div>
-            
-            {/* Mobile Menu */}
-            <MobileMenu />
-          </div>
-        </div>
-      </nav>
-
+      <Navbar />
       {/* Hero Section */}
       <section className="text-center py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">

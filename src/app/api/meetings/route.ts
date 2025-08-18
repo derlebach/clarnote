@@ -19,19 +19,40 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized - Please sign in" }, { status: 401 })
     }
 
-    // Get user ID from database if not in session
+    // Get user ID from database and ensure user exists
     let userId = session.user.id
-    if (!userId) {
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        select: { id: true }
+    let user = null
+    
+    if (userId) {
+      // Check if user exists in database
+      user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true }
       })
-      if (!user) {
-        console.error('Meetings API - User not found in database:', session.user.email)
-        return NextResponse.json({ error: "User not found" }, { status: 401 })
-      }
-      userId = user.id
     }
+    
+    if (!user) {
+      // Try to find user by email
+      user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { id: true, email: true }
+      })
+    }
+    
+    if (!user) {
+      // Create user if they don't exist
+      console.log('Meetings API - Creating new user:', session.user.email)
+      user = await prisma.user.create({
+        data: {
+          email: session.user.email,
+          name: session.user.name || null,
+          image: session.user.image || null,
+        },
+        select: { id: true, email: true }
+      })
+    }
+    
+    userId = user.id
 
     const meetings = await prisma.meeting.findMany({
       where: {

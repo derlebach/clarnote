@@ -11,6 +11,7 @@ import ProfileMenu from '@/components/ProfileMenu'
 import { Capacitor } from '@capacitor/core'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import Image from "next/image"
+import Navbar from '@/components/Navbar';
 
 interface Meeting {
   id: string
@@ -318,29 +319,22 @@ export default function Dashboard() {
     )
   }
 
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Please sign in to access your dashboard</h1>
+          <Link href="/auth/signin" className="text-blue-500 hover:underline">
+            Sign In
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f7f8f9] via-[#f2f3f5] to-[#eef1f4]">
-      {/* Navigation */}
-      <nav className="backdrop-blur-sm bg-white/80 border-b border-gray-200/30">
-        <div className="max-w-6xl mx-auto px-8 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-2">
-              <Image 
-                src="/logo.svg" 
-                alt="Clarnote" 
-                width={127}
-                height={42}
-                className="h-8 w-auto"
-              />
-            </Link>
-            
-            <div className="flex items-center space-x-4">
-              <ProfileMenu />
-            </div>
-          </div>
-        </div>
-      </nav>
-
+      <Navbar />
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-8 py-12">
         {/* Header */}

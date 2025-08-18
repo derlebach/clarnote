@@ -6,8 +6,8 @@ import MobileTouchOptimizer from "@/components/MobileTouchOptimizer";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Clarnote - AI-Powered Meeting Assistant",
-  description: "Transform your meetings with AI-powered transcription, summaries, and action items",
+  title: "Clarnote - The World's Most Accurate AI Meeting Assistant",
+  description: "Transform your meetings with world-class transcription that's better than human. 99.9% accuracy, smart speaker detection, instant summaries, and action items.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

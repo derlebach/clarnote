@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { validateAudioFile, isValidLanguageCode } from "@/lib/utils"
+import { prisma } from "@/lib/prisma"
 
 // Configure the route to handle large request bodies
 export const runtime = 'nodejs'
@@ -25,38 +26,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized - Please sign in" }, { status: 401 })
     }
 
-    // Get user ID from database if not in session
+    // Get user ID from database and ensure user exists
     let userId = session.user.id
-    if (!userId) {
-      // Use Supabase REST API to find user
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseKey) {
-        console.error('Upload API - Missing Supabase configuration')
-        return NextResponse.json({ error: "Configuration error" }, { status: 500 })
-      }
-
-      const userResponse = await fetch(`${supabaseUrl}/rest/v1/User?email=eq.${session.user.email}`, {
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
-        }
+    let user = null
+    
+    if (userId) {
+      // Check if user exists in database
+      user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true }
       })
-
-      if (!userResponse.ok) {
-        console.error('Upload API - Failed to fetch user:', userResponse.status)
-        return NextResponse.json({ error: "User not found" }, { status: 401 })
-      }
-
-      const users = await userResponse.json()
-      if (users.length === 0) {
-        console.error('Upload API - User not found in database:', session.user.email)
-        return NextResponse.json({ error: "User not found" }, { status: 401 })
-      }
-      
-      userId = users[0].id
     }
+    
+    if (!user) {
+      // Try to find user by email
+      user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { id: true, email: true }
+      })
+    }
+    
+    if (!user) {
+      // Create user if they don't exist
+      console.log('Upload API - Creating new user:', session.user.email)
+      user = await prisma.user.create({
+        data: {
+          email: session.user.email,
+          name: session.user.name || null,
+          image: session.user.image || null,
+        },
+        select: { id: true, email: true }
+      })
+    }
+    
+    userId = user.id
 
     const formData = await request.formData()
     const file = formData.get("file") as File
@@ -114,49 +117,20 @@ export async function POST(request: NextRequest) {
 
     console.log(`File uploaded: ${fileName}, Language: ${language || 'auto'}, Quality: ${qualityMode}`)
 
-    // Create meeting record in database using Supabase REST API
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Upload API - Missing Supabase configuration for meeting creation')
-      return NextResponse.json({ error: "Configuration error" }, { status: 500 })
-    }
-
-    const meetingData = {
-      title,
-      description: description || null,
-      tags: tags.join(','), // Convert array to comma-separated string
-      language: language || 'auto',
-      originalFileName: file.name,
-      fileUrl: `/uploads/${fileName}`,
-      fileSize: file.size,
-      status: "UPLOADED",
-      userId: userId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    const meetingResponse = await fetch(`${supabaseUrl}/rest/v1/Meeting`, {
-      method: 'POST',
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify(meetingData)
+    // Create meeting record in database using Prisma
+    const meeting = await prisma.meeting.create({
+      data: {
+        title,
+        description: description || null,
+        tags: tags.join(','), // Convert array to comma-separated string
+        language: language || 'auto',
+        originalFileName: file.name,
+        fileUrl: `/uploads/${fileName}`,
+        fileSize: file.size,
+        status: "UPLOADED",
+        userId: userId,
+      }
     })
-
-    if (!meetingResponse.ok) {
-      console.error('Upload API - Failed to create meeting:', meetingResponse.status)
-      const errorText = await meetingResponse.text()
-      console.error('Meeting creation error:', errorText)
-      return NextResponse.json({ error: "Failed to create meeting record" }, { status: 500 })
-    }
-
-    const meetings = await meetingResponse.json()
-    const meeting = meetings[0]
 
     // Start transcription process asynchronously
     // We'll implement this in a separate API route to avoid timeout issues
