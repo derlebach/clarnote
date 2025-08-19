@@ -32,142 +32,146 @@ export default function Home() {
       <Navbar />
       {/* Hero Section */}
       <section className="relative px-4 pt-32 pb-20 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 tracking-tight">
-              The World's Most Accurate
-              <span className="block bg-gradient-to-r from-gray-600 to-gray-900 bg-clip-text text-transparent">
-                AI Meeting Assistant
-              </span>
-            </h1>
-            <p className="mt-6 text-xl sm:text-2xl text-gray-600 max-w-3xl mx-auto">
-              Powered by our breakthrough transcription engine, Clarnote delivers transcripts so precise and polished they feel better than human. Transform every meeting into insights, action items, and shareable knowledge in seconds.
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth/signin">
-                <Button size="lg" className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-6 text-lg rounded-full">
-                  Start Free Trial
-                </Button>
-              </Link>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-gray-300 hover:bg-gray-50 px-8 py-6 text-lg rounded-full"
-                onClick={handleGetAppClick}
-              >
-                Get the App
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            The World's Most Accurate
+            <br />
+            AI Meeting Assistant
+          </h1>
+          <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+            Powered by our breakthrough transcription engine, Clarnote delivers transcripts so precise and polished they feel better than human. Transform every meeting into insights, action items, and shareable knowledge in seconds.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/auth/signin">
+              <Button size="lg" className="w-full sm:w-auto bg-black text-white hover:bg-gray-800 px-8 py-4 text-lg rounded-full">
+                Start Free Trial
               </Button>
-            </div>
-            <p className="mt-6 text-sm text-gray-500">
-              No credit card required · Join thousands of teams already using Clarnote
-            </p>
+            </Link>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="w-full sm:w-auto bg-transparent border-2 border-gray-300 text-gray-900 hover:bg-gray-50 px-8 py-4 text-lg rounded-full transition-all"
+              onClick={handleGetAppClick}
+            >
+              Get the App
+            </Button>
           </div>
+          <p className="text-sm text-gray-500 mt-4">
+            No credit card required • Join thousands of teams already using Clarnote
+          </p>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-16">
-            How It Works
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
+      {/* How it Works Section */}
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              How it Works
+            </h2>
+            <p className="text-lg sm:text-xl text-gray-600">
+              Three simple steps to perfect meeting intelligence
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 sm:gap-12">
             <div className="text-center">
-              <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Upload</h3>
-              <p className="text-gray-600">Drop in your audio or video — any format, any language.</p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">Upload</h3>
+              <p className="text-gray-600 text-base sm:text-lg">
+                Drop in your audio or video — any format, any language.
+              </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Transcribe</h3>
-              <p className="text-gray-600">Our world-class AI engine captures every word with 99.9% accuracy, separates speakers, and formats perfectly.</p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">Transcribe</h3>
+              <p className="text-gray-600 text-base sm:text-lg">
+                Our world-class AI engine captures every word with 99.9% accuracy, separates speakers, and formats perfectly.
+              </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Act</h3>
-              <p className="text-gray-600">Get clean transcripts, instant summaries, and action items you can trust.</p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">Act</h3>
+              <p className="text-gray-600 text-base sm:text-lg">
+                Get clean transcripts, instant summaries, and action items you can trust.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-3 gap-12">
-            <div>
-              <h3 className="text-2xl font-bold mb-6">Smart Transcription</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start">
-                  <span className="text-2xl mr-3">🚀</span>
+      <section className="py-16 sm:py-20 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              Features Section
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 sm:gap-12">
+            {/* Smart Transcription */}
+            <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+                Smart Transcription
+              </h3>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-start space-x-3">
+                  <span className="text-lg">🚀</span>
                   <div>
-                    <p className="font-semibold">Unmatched Accuracy</p>
-                    <p className="text-gray-600">99.9% word-level precision, even in noisy environments.</p>
+                    <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Unmatched Accuracy</h4>
+                    <p className="text-gray-600 text-sm sm:text-base">99.9% word-level precision, even in noisy environments.</p>
                   </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-2xl mr-3">🗣️</span>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <span className="text-lg">🗣️</span>
                   <div>
-                    <p className="font-semibold">Speaker Intelligence</p>
-                    <p className="text-gray-600">Identifies, separates, and labels multiple voices.</p>
+                    <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Speaker Intelligence</h4>
+                    <p className="text-gray-600 text-sm sm:text-base">Identifies, separates, and labels multiple voices.</p>
                   </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-2xl mr-3">🌍</span>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <span className="text-lg">🌍</span>
                   <div>
-                    <p className="font-semibold">20+ Languages</p>
-                    <p className="text-gray-600">Same flawless quality across English, Spanish, French, German, and more.</p>
+                    <h4 className="font-semibold text-gray-900 text-sm sm:text-base">20+ Languages</h4>
+                    <p className="text-gray-600 text-sm sm:text-base">Same flawless quality across English, Spanish, French, German, and more.</p>
                   </div>
-                </li>
-              </ul>
+                </div>
+              </div>
             </div>
-            
-            <div>
-              <h3 className="text-2xl font-bold mb-6">AI Summaries & Action Items</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start">
-                  <span className="text-gray-400 mr-3">•</span>
-                  <p className="text-gray-700">Executive summaries in seconds</p>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-gray-400 mr-3">•</span>
-                  <p className="text-gray-700">Auto-extracted decisions & deadlines</p>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-gray-400 mr-3">•</span>
-                  <p className="text-gray-700">Follow-up emails drafted instantly</p>
-                </li>
-              </ul>
+
+            {/* AI Summaries */}
+            <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+                AI Summaries & Action Items
+              </h3>
+              <div className="space-y-3 sm:space-y-4">
+                <p className="text-gray-600 text-sm sm:text-base">Executive summaries in seconds</p>
+                <p className="text-gray-600 text-sm sm:text-base">Auto-extracted decisions & deadlines</p>
+                <p className="text-gray-600 text-sm sm:text-base">Follow-up emails drafted instantly</p>
+              </div>
             </div>
-            
-            <div>
-              <h3 className="text-2xl font-bold mb-6">Share & Export Anywhere</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start">
-                  <span className="text-gray-400 mr-3">•</span>
-                  <p className="text-gray-700">One-click PDF, DOCX, or SRT export</p>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-gray-400 mr-3">•</span>
-                  <p className="text-gray-700">Shareable meeting links</p>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-gray-400 mr-3">•</span>
-                  <p className="text-gray-700">Integration-ready API</p>
-                </li>
-              </ul>
+
+            {/* Share & Export */}
+            <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+                Share & Export Anywhere
+              </h3>
+              <div className="space-y-3 sm:space-y-4">
+                <p className="text-gray-600 text-sm sm:text-base">One-click PDF, DOCX, or SRT export</p>
+                <p className="text-gray-600 text-sm sm:text-base">Shareable meeting links</p>
+                <p className="text-gray-600 text-sm sm:text-base">Integration-ready API</p>
+              </div>
             </div>
           </div>
         </div>
@@ -191,7 +195,7 @@ export default function Home() {
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-white text-white hover:bg-white/10 px-8 py-6 text-lg rounded-full"
+              className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 py-6 text-lg rounded-full transition-all"
               onClick={handleGetAppClick}
             >
               Get the App
