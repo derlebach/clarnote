@@ -734,11 +734,11 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now()
     
     // Initialize OpenAI client
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-    
-    if (!openai.apiKey) {
+    if (!process.env.OPENAI_API_KEY) {
       throw new Error('OpenAI API key not configured')
     }
+    
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
     
     // Get meeting details
     const meeting = await prisma.meeting.findUnique({
