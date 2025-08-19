@@ -9,13 +9,14 @@ export const metadata: Metadata = {
   robots: 'noindex, nofollow',
 }
 
-export default function WaitlistError({
+export default async function WaitlistError({
   searchParams,
 }: {
-  searchParams: { message?: string }
+  searchParams: Promise<{ message?: string }>
 }) {
-  const message = searchParams.message || 'Something went wrong';
-  
+  const params = await searchParams;
+  const message = params.message || 'Something went wrong';
+
   const getErrorDetails = (message: string) => {
     switch (message.toLowerCase()) {
       case 'invalid confirmation link':
@@ -36,13 +37,13 @@ export default function WaitlistError({
         };
     }
   };
-  
+
   const { title, description } = getErrorDetails(message);
-  
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <Navbar />
-      
+
       <div className="pt-20 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto text-center">
           <div className="mb-8">
@@ -51,16 +52,16 @@ export default function WaitlistError({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            
+
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
               {title}
             </h1>
-            
+
             <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
               {description}
             </p>
           </div>
-          
+
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-8 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               What can you do?
@@ -77,8 +78,8 @@ export default function WaitlistError({
               <li className="flex items-start">
                 <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">•</span>
                 Contact us at{' '}
-                <a 
-                  href="mailto:hello@clarnote.com" 
+                <a
+                  href="mailto:hello@clarnote.com"
                   className="text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   hello@clarnote.com
@@ -87,7 +88,7 @@ export default function WaitlistError({
               </li>
             </ul>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 px-8 py-3 rounded-full">
               <Link href="/">Back to Homepage</Link>

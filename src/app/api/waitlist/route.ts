@@ -4,6 +4,7 @@ import { existsSync } from 'fs';
 import path from 'path';
 import { addToWaitlist, isSupabaseConfigured, type WaitlistEntry } from '@/lib/supabaseServer';
 import { validateEmail, checkRateLimit, sanitizeForLogging } from '@/lib/utils/validation';
+import { sendConfirmationEmail } from '@/lib/utils/email';
 
 // Get client IP address
 function getClientIP(request: NextRequest): string {
