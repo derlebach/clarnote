@@ -5,6 +5,7 @@ import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { validateAudioFile, isValidLanguageCode } from "@/lib/utils"
 import { prisma } from "@/lib/prisma"
+import { supabase } from "@/lib/supabaseServer"
 
 // Configure the route to handle large request bodies
 export const runtime = 'nodejs'
@@ -62,16 +63,21 @@ export async function POST(request: NextRequest) {
     userId = user.id
 
     const formData = await request.formData()
-    const file = formData.get("file") as File
-    const title = formData.get("title") as string
-    const description = formData.get("description") as string
-    const tagsString = formData.get("tags") as string
-    const language = formData.get("language") as string
-    const qualityMode = formData.get("qualityMode") as string || "accurate"
+    const file = formData.get("file") as File | null
+    const title = (formData.get("title") as string) || ''
+    const description = (formData.get("description") as string) || ''
+    const tagsString = (formData.get("tags") as string) || ''
+    const language = (formData.get("language") as string) || 'auto'
+    const qualityMode = (formData.get("qualityMode") as string) || "accurate"
 
-    if (!file || !title) {
+    // Support direct-to-storage uploads: client provides fileUrl, originalFileName, fileSize
+    const providedFileUrl = (formData.get("fileUrl") as string) || ''
+    const providedOriginalName = (formData.get("originalFileName") as string) || ''
+    const providedFileSize = formData.get("fileSize") ? Number(formData.get("fileSize")) : undefined
+
+    if ((!file && !providedFileUrl) || !title) {
       return NextResponse.json(
-        { error: "File and title are required" },
+        { error: "File (or fileUrl) and title are required" },
         { status: 400 }
       )
     }
@@ -84,38 +90,80 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file
-    const validation = validateAudioFile(file)
-    if (!validation.valid) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      )
-    }
-
     // Parse tags
     const tags = tagsString ? tagsString.split(",").map(tag => tag.trim()).filter(Boolean) : []
 
-    // Create upload directory if it doesn't exist
-    const uploadDir = join(process.cwd(), "uploads")
-    try {
-      await mkdir(uploadDir, { recursive: true })
-    } catch (error) {
-      // Directory might already exist
+    let storedFileUrl: string | null = null
+    let originalFileName = providedOriginalName || (file ? file.name : '')
+    let fileSize = providedFileSize || (file ? file.size : 0)
+
+    if (providedFileUrl) {
+      // Expect a Supabase Storage URL prepared by the client
+      if (!providedFileUrl.startsWith('supabase://')) {
+        return NextResponse.json(
+          { error: "Unsupported fileUrl. Expected supabase:// URL" },
+          { status: 400 }
+        )
+      }
+      storedFileUrl = providedFileUrl
+    } else if (file) {
+      // Validate file
+      const validation = validateAudioFile(file)
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: validation.error },
+          { status: 400 }
+        )
+      }
+
+      // Generate unique filename
+      const timestamp = Date.now()
+      const fileExtension = file.name.split('.').pop() || ''
+      const sanitizedExt = fileExtension.replace(/[^a-zA-Z0-9]/g, '') || 'm4a'
+      const fileName = `${session.user.id}_${timestamp}.${sanitizedExt}`
+
+      // Convert to buffer once
+      const bytes = await file.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+
+      if (supabase) {
+        const bucket = 'uploads'
+        const objectPath = `${session.user.id}/${fileName}`
+        const { error: uploadError } = await supabase.storage
+          .from(bucket)
+          .upload(objectPath, buffer, {
+            contentType: (file as any).type || 'application/octet-stream',
+            upsert: true,
+          })
+
+        if (uploadError) {
+          console.error('Upload API - Supabase Storage upload failed:', uploadError)
+          return NextResponse.json(
+            { error: "Upload failed. Please try again." },
+            { status: 500 }
+          )
+        }
+
+        storedFileUrl = `supabase://uploads/${objectPath}`
+        console.log(`File uploaded to Supabase Storage: ${storedFileUrl}`)
+      } else {
+        // Fallback: local disk (works locally, not persistent on Vercel)
+        const uploadDir = join(process.cwd(), "uploads")
+        try {
+          await mkdir(uploadDir, { recursive: true })
+        } catch (error) {
+          // Directory might already exist
+        }
+        const filePath = join(uploadDir, fileName)
+        await writeFile(filePath, buffer)
+        storedFileUrl = `/uploads/${fileName}`
+        console.log(`File saved locally: ${storedFileUrl}`)
+      }
     }
 
-    // Generate unique filename
-    const timestamp = Date.now()
-    const fileExtension = file.name.split('.').pop() || ''
-    const fileName = `${session.user.id}_${timestamp}.${fileExtension}`
-    const filePath = join(uploadDir, fileName)
-
-    // Save file to disk
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
-
-    console.log(`File uploaded: ${fileName}, Language: ${language || 'auto'}, Quality: ${qualityMode}`)
+    if (!storedFileUrl) {
+      return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+    }
 
     // Create meeting record in database using Prisma
     const meeting = await prisma.meeting.create({
@@ -124,16 +172,15 @@ export async function POST(request: NextRequest) {
         description: description || null,
         tags: tags.join(','), // Convert array to comma-separated string
         language: language || 'auto',
-        originalFileName: file.name,
-        fileUrl: `/uploads/${fileName}`,
-        fileSize: file.size,
+        originalFileName: originalFileName || null,
+        fileUrl: storedFileUrl,
+        fileSize: fileSize || null,
         status: "UPLOADED",
         userId: userId,
       }
     })
 
     // Start transcription process asynchronously
-    // We'll implement this in a separate API route to avoid timeout issues
     fetch(`${process.env.NEXTAUTH_URL}/api/transcribe`, {
       method: "POST",
       headers: {

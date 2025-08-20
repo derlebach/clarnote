@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { join } from 'path'
-import { createReadStream, existsSync, statSync } from 'fs'
+import { createReadStream, existsSync, statSync, writeFileSync, mkdirSync } from 'fs'
 import { PrismaClient } from '@prisma/client'
 import OpenAI from 'openai'
+import { supabase } from '@/lib/supabaseServer'
 
 const prisma = new PrismaClient()
 
@@ -755,15 +756,35 @@ export async function POST(request: NextRequest) {
       data: { status: 'TRANSCRIBING' }
     })
     
-    const filePath = join(process.cwd(), "uploads", meeting.fileUrl.replace("/uploads/", ""))
-    
-    if (!existsSync(filePath)) {
-      throw new Error(`Audio file not found: ${filePath}`)
+    // Resolve file path/stream depending on storage
+    let localPath: string
+    if (meeting.fileUrl.startsWith('supabase://')) {
+      if (!supabase) {
+        throw new Error('Supabase not configured for downloading audio file')
+      }
+      const [, bucket, ...rest] = meeting.fileUrl.replace('supabase://', '').split('/')
+      const objectPath = rest.join('/')
+      const { data, error } = await supabase.storage.from(bucket).download(objectPath)
+      if (error || !data) {
+        throw new Error(`Failed to download audio from Supabase: ${error?.message || 'unknown'}`)
+      }
+      const tempDir = join(process.cwd(), '.tmp')
+      try { mkdirSync(tempDir, { recursive: true }) } catch {}
+      localPath = join(tempDir, `${meetingId}-${Date.now()}.audio`)
+      const arrayBuffer = await data.arrayBuffer()
+      writeFileSync(localPath, Buffer.from(arrayBuffer))
+    } else if (meeting.fileUrl.startsWith('/uploads/')) {
+      localPath = join(process.cwd(), 'uploads', meeting.fileUrl.replace('/uploads/', ''))
+    } else {
+      throw new Error(`Unsupported fileUrl: ${meeting.fileUrl}`)
     }
     
-    const fileStats = statSync(filePath)
-    const fileSizeMB = Math.round(fileStats.size / (1024 * 1024))
+    if (!existsSync(localPath)) {
+      throw new Error(`Audio file not found: ${localPath}`)
+    }
     
+    const fileStats = statSync(localPath)
+    const fileSizeMB = Math.round(fileStats.size / (1024 * 1024))
     console.log(`📁 Processing audio file: ${fileSizeMB}MB`)
     
     // Create optimal transcription options
@@ -774,7 +795,7 @@ export async function POST(request: NextRequest) {
     )
     
     // Create file stream
-    const audioFile = createReadStream(filePath)
+    const audioFile = createReadStream(localPath)
     transcriptionOptions.file = audioFile
     
     console.log(`🎯 Transcription options:`, {
