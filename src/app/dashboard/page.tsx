@@ -12,6 +12,7 @@ import { Capacitor } from '@capacitor/core'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import Image from "next/image"
 import Navbar from '@/components/Navbar';
+import { supabaseBrowser } from '@/lib/supabaseBrowser'
 
 interface Meeting {
   id: string
@@ -267,17 +268,50 @@ export default function Dashboard() {
     setUploadProgress(0)
 
     try {
-      const formData = new FormData()
-      formData.append('file', selectedFile)
-      formData.append('title', uploadTitle.trim())
-      formData.append('description', '')
-      formData.append('tags', '')
-      formData.append('language', selectedLanguage)
+      const useDirectSupabase = !!supabaseBrowser
+
+      let requestBody: FormData
+
+      if (useDirectSupabase) {
+        // 1) Upload file directly from the browser to Supabase Storage
+        const fileExt = selectedFile.name.split('.').pop() || 'm4a'
+        const sanitizedExt = fileExt.replace(/[^a-zA-Z0-9]/g, '') || 'm4a'
+        const uniquePart = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+        const userFolder = (session?.user?.id || 'anonymous')
+        const objectPath = `${userFolder}/${uniquePart}.${sanitizedExt}`
+        const { data, error } = await supabaseBrowser!.storage.from('uploads').upload(objectPath, selectedFile, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: selectedFile.type || 'application/octet-stream'
+        })
+        if (error) {
+          console.error('Supabase direct upload error:', error)
+          alert('Upload failed. Please try again.')
+          return
+        }
+        // 2) Create meeting via API with canonical supabase:// URL
+        requestBody = new FormData()
+        requestBody.append('title', uploadTitle.trim())
+        requestBody.append('description', '')
+        requestBody.append('tags', '')
+        requestBody.append('language', selectedLanguage)
+        requestBody.append('fileUrl', `supabase://uploads/${objectPath}`)
+        requestBody.append('originalFileName', selectedFile.name)
+        requestBody.append('fileSize', String(selectedFile.size))
+      } else {
+        // Fallback: send the file to our API to store (local/dev or server-side upload)
+        requestBody = new FormData()
+        requestBody.append('file', selectedFile)
+        requestBody.append('title', uploadTitle.trim())
+        requestBody.append('description', '')
+        requestBody.append('tags', '')
+        requestBody.append('language', selectedLanguage)
+      }
 
       const response = await fetch('/api/upload', {
         method: 'POST',
-        body: formData,
-        credentials: 'include', // Include cookies for session authentication
+        body: requestBody,
+        credentials: 'include',
       })
 
       if (response.ok) {
