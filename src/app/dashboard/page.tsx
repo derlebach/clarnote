@@ -13,6 +13,7 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import Image from "next/image"
 import Navbar from '@/components/Navbar';
 import { supabaseBrowser } from '@/lib/supabaseBrowser'
+import { SUPABASE_BUCKET } from '@/lib/storage'
 
 interface Meeting {
   id: string
@@ -279,7 +280,7 @@ export default function Dashboard() {
         const uniquePart = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
         const userFolder = (session?.user?.id || 'anonymous')
         const objectPath = `${userFolder}/${uniquePart}.${sanitizedExt}`
-        const { data, error } = await supabaseBrowser!.storage.from('uploads').upload(objectPath, selectedFile, {
+        const { data, error } = await supabaseBrowser!.storage.from(SUPABASE_BUCKET).upload(objectPath, selectedFile, {
           cacheControl: '3600',
           upsert: true,
           contentType: selectedFile.type || 'application/octet-stream'
@@ -295,7 +296,7 @@ export default function Dashboard() {
         requestBody.append('description', '')
         requestBody.append('tags', '')
         requestBody.append('language', selectedLanguage)
-        requestBody.append('fileUrl', `supabase://uploads/${objectPath}`)
+        requestBody.append('fileUrl', `supabase://${SUPABASE_BUCKET}/${objectPath}`)
         requestBody.append('originalFileName', selectedFile.name)
         requestBody.append('fileSize', String(selectedFile.size))
       } else {

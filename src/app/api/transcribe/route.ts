@@ -4,6 +4,7 @@ import { createReadStream, existsSync, statSync, writeFileSync, mkdirSync } from
 import { PrismaClient } from '@prisma/client'
 import OpenAI from 'openai'
 import { supabase } from '@/lib/supabaseServer'
+import { SUPABASE_BUCKET } from '@/lib/storage'
 
 const prisma = new PrismaClient()
 
@@ -762,8 +763,10 @@ export async function POST(request: NextRequest) {
       if (!supabase) {
         throw new Error('Supabase not configured for downloading audio file')
       }
-      const [, bucket, ...rest] = meeting.fileUrl.replace('supabase://', '').split('/')
-      const objectPath = rest.join('/')
+      const urlSans = meeting.fileUrl.replace('supabase://', '')
+      const firstSlash = urlSans.indexOf('/')
+      const bucket = urlSans.slice(0, firstSlash) || SUPABASE_BUCKET
+      const objectPath = urlSans.slice(firstSlash + 1)
       const { data, error } = await supabase.storage.from(bucket).download(objectPath)
       if (error || !data) {
         throw new Error(`Failed to download audio from Supabase: ${error?.message || 'unknown'}`)

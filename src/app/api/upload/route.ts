@@ -6,6 +6,7 @@ import { join } from "path"
 import { validateAudioFile, isValidLanguageCode } from "@/lib/utils"
 import { prisma } from "@/lib/prisma"
 import { supabase } from "@/lib/supabaseServer"
+import { SUPABASE_BUCKET } from "@/lib/storage"
 
 // Configure the route to handle large request bodies
 export const runtime = 'nodejs'
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
       const buffer = Buffer.from(bytes)
 
       if (supabase) {
-        const bucket = 'uploads'
+        const bucket = SUPABASE_BUCKET
         const objectPath = `${session.user.id}/${fileName}`
         const { error: uploadError } = await supabase.storage
           .from(bucket)
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        storedFileUrl = `supabase://uploads/${objectPath}`
+        storedFileUrl = `supabase://${bucket}/${objectPath}`
         console.log(`File uploaded to Supabase Storage: ${storedFileUrl}`)
       } else {
         // Fallback: local disk (works locally, not persistent on Vercel)
