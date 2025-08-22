@@ -287,7 +287,8 @@ export default function Dashboard() {
         })
         if (error) {
           console.error('Supabase direct upload error:', error)
-          alert('Upload failed. Please try again.')
+          console.error('Error details:', JSON.stringify(error, null, 2))
+          alert(`Upload failed: ${error.message || 'Please try again.'}`)
           return
         }
         // 2) Create meeting via API with canonical supabase:// URL
