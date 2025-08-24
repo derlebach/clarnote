@@ -12,8 +12,7 @@ import { Capacitor } from '@capacitor/core'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import Image from "next/image"
 import Navbar from '@/components/Navbar';
-import { supabaseBrowser } from '@/lib/supabaseBrowser'
-import { SUPABASE_BUCKET } from '@/lib/storage'
+// Removed direct Supabase imports - now using signed URL flow
 
 interface Meeting {
   id: string
@@ -269,52 +268,59 @@ export default function Dashboard() {
     setUploadProgress(0)
 
     try {
-      const useDirectSupabase = !!supabaseBrowser
-
-      let requestBody: FormData
-
-      if (useDirectSupabase) {
-        // 1) Upload file directly from the browser to Supabase Storage
-        const fileExt = selectedFile.name.split('.').pop() || 'm4a'
-        const sanitizedExt = fileExt.replace(/[^a-zA-Z0-9]/g, '') || 'm4a'
-        const uniquePart = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
-        const userFolder = (session?.user?.id || 'anonymous')
-        const objectPath = `${userFolder}/${uniquePart}.${sanitizedExt}`
-        const { data, error } = await supabaseBrowser!.storage.from(SUPABASE_BUCKET).upload(objectPath, selectedFile, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: selectedFile.type || 'application/octet-stream'
+      // Step 1: Get signed upload URL from our API
+      const uploadUrlResponse = await fetch('/api/upload-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          fileName: selectedFile.name,
+          mimeType: selectedFile.type || 'application/octet-stream'
         })
-        if (error) {
-          console.error('Supabase direct upload error:', error)
-          console.error('Error details:', JSON.stringify(error, null, 2))
-          alert(`Upload failed: ${error.message || 'Please try again.'}`)
-          return
-        }
-        // 2) Create meeting via API with canonical supabase:// URL
-        requestBody = new FormData()
-        requestBody.append('title', uploadTitle.trim())
-        requestBody.append('description', '')
-        requestBody.append('tags', '')
-        requestBody.append('language', selectedLanguage)
-        requestBody.append('fileUrl', `supabase://${SUPABASE_BUCKET}/${objectPath}`)
-        requestBody.append('originalFileName', selectedFile.name)
-        requestBody.append('fileSize', String(selectedFile.size))
-      } else {
-        // Fallback: send the file to our API to store (local/dev or server-side upload)
-        requestBody = new FormData()
-        requestBody.append('file', selectedFile)
-        requestBody.append('title', uploadTitle.trim())
-        requestBody.append('description', '')
-        requestBody.append('tags', '')
-        requestBody.append('language', selectedLanguage)
+      })
+
+      if (!uploadUrlResponse.ok) {
+        const error = await uploadUrlResponse.json()
+        throw new Error(error.error || 'Failed to get upload URL')
       }
+
+      const { signedUrl, fullPath } = await uploadUrlResponse.json()
+
+      // Step 2: Upload file directly to Supabase using signed URL
+      setUploadProgress(25)
+      const uploadResponse = await fetch(signedUrl, {
+        method: 'PUT',
+        body: selectedFile,
+        headers: {
+          'Content-Type': selectedFile.type || 'application/octet-stream',
+        }
+      })
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload file to storage')
+      }
+
+      setUploadProgress(75)
+
+      // Step 3: Create meeting record via our API
+      const requestBody = new FormData()
+      requestBody.append('title', uploadTitle.trim())
+      requestBody.append('description', '')
+      requestBody.append('tags', '')
+      requestBody.append('language', selectedLanguage)
+      requestBody.append('fileUrl', fullPath) // Use the supabase:// path
+      requestBody.append('originalFileName', selectedFile.name)
+      requestBody.append('fileSize', String(selectedFile.size))
 
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: requestBody,
         credentials: 'include',
       })
+
+      setUploadProgress(100)
 
       if (response.ok) {
         const result = await response.json()
@@ -326,7 +332,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Upload error:', error)
-      alert('Upload failed. Please try again.')
+      alert(`Upload failed: ${error instanceof Error ? error.message : 'Please try again.'}`)
     } finally {
       setIsUploading(false)
       setUploadProgress(0)
