@@ -8,6 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  
   const session = await getServerSession(authOptions)
   
   console.log('Meeting API - Session check:', {
@@ -75,7 +76,7 @@ export async function GET(
     })
 
     if (!meeting) {
-      console.error('Meeting API - Meeting not found or access denied')
+      console.error('Meeting API - Meeting not found or access denied:', { meetingId: id, userId })
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 })
     }
 
@@ -92,6 +93,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  
   const session = await getServerSession(authOptions)
   
   console.log('Meeting Update API - Session check:', {
@@ -194,18 +196,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const session = await getServerSession(authOptions)
   
-  console.log('Meeting DELETE API - Session check:', {
-    hasSession: !!session,
-    hasUser: !!session?.user,
-    userEmail: session?.user?.email,
-    userId: session?.user?.id,
-    requestedMeetingId: id
-  })
+  const session = await getServerSession(authOptions)
 
   if (!session?.user?.email) {
-    console.error('Meeting DELETE API - No valid session or user email')
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
