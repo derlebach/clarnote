@@ -304,8 +304,35 @@ export default function Dashboard() {
 
     } catch (error) {
       console.error('Upload - Error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Upload failed. Please try again.'
-      alert(`Upload failed: ${errorMessage}`)
+      
+      // Try to extract more specific error information
+      let errorMessage = 'Upload failed. Please try again.'
+      let errorDetails = ''
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+        
+        // Check if it's a fetch error with response details
+        if (error.message.includes('Failed to get upload URL') || 
+            error.message.includes('Storage upload failed') || 
+            error.message.includes('Failed to create meeting record')) {
+          errorDetails = error.message
+        }
+      }
+      
+      console.error('Upload - Detailed error info:', {
+        message: errorMessage,
+        details: errorDetails,
+        type: typeof error,
+        errorObject: error
+      })
+      
+      // Show user-friendly error with option to see details
+      const fullMessage = errorDetails ? 
+        `Upload failed: ${errorDetails}` : 
+        `Upload failed: ${errorMessage}`
+        
+      alert(fullMessage)
     } finally {
       setIsUploading(false)
       setUploadProgress(0)
