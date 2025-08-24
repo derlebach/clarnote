@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       const timestamp = Date.now()
       const fileExtension = file.name.split('.').pop() || ''
       const sanitizedExt = fileExtension.replace(/[^a-zA-Z0-9]/g, '') || 'm4a'
-      const fileName = `${session.user.id}_${timestamp}.${sanitizedExt}`
+      const fileName = `${userId}_${timestamp}.${sanitizedExt}`
 
       // Convert to buffer once
       const bytes = await file.arrayBuffer()
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
       if (supabase) {
         const bucket = SUPABASE_BUCKET
-        const objectPath = `${session.user.id}/${fileName}`
+        const objectPath = `${userId}/${fileName}`
         const { error: uploadError } = await supabase.storage
           .from(bucket)
           .upload(objectPath, buffer, {
