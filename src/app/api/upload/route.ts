@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { writeFile, mkdir } from "fs/promises"
-import { join } from "path"
-import { validateAudioFile, isValidLanguageCode } from "@/lib/utils"
+import { isValidLanguageCode } from "@/lib/utils"
 import { prisma } from "@/lib/prisma"
-import { supabase } from "@/lib/supabaseServer"
-import { SUPABASE_BUCKET } from "@/lib/storage"
 
-// Configure the route to handle large request bodies
+// Configure the route
 export const runtime = 'nodejs'
-export const maxDuration = 60 // 60 seconds timeout for uploads
+export const maxDuration = 30 // Reduced since we're not handling file uploads
 
+/**
+ * DEPRECATED: This route no longer handles file uploads directly.
+ * Use the new flow: /api/upload-url -> signed URL upload -> /api/transcribe
+ * 
+ * This route now only creates meeting records after files are uploaded via signed URLs.
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -64,21 +66,21 @@ export async function POST(request: NextRequest) {
     userId = user.id
 
     const formData = await request.formData()
-    const file = formData.get("file") as File | null
     const title = (formData.get("title") as string) || ''
     const description = (formData.get("description") as string) || ''
     const tagsString = (formData.get("tags") as string) || ''
     const language = (formData.get("language") as string) || 'auto'
     const qualityMode = (formData.get("qualityMode") as string) || "accurate"
 
-    // Support direct-to-storage uploads: client provides fileUrl, originalFileName, fileSize
-    const providedFileUrl = (formData.get("fileUrl") as string) || ''
-    const providedOriginalName = (formData.get("originalFileName") as string) || ''
-    const providedFileSize = formData.get("fileSize") ? Number(formData.get("fileSize")) : undefined
+    // NEW: Support for signed URL uploads - expect storagePath instead of file
+    const storagePath = (formData.get("storagePath") as string) || ''
+    const originalFileName = (formData.get("originalFileName") as string) || ''
+    const fileSize = formData.get("fileSize") ? Number(formData.get("fileSize")) : null
 
-    if ((!file && !providedFileUrl) || !title) {
+    if (!storagePath || !title) {
+      console.error('Upload API - Missing required fields:', { storagePath: !!storagePath, title: !!title })
       return NextResponse.json(
-        { error: "File (or fileUrl) and title are required" },
+        { error: "storagePath and title are required" },
         { status: 400 }
       )
     }
@@ -94,77 +96,13 @@ export async function POST(request: NextRequest) {
     // Parse tags
     const tags = tagsString ? tagsString.split(",").map(tag => tag.trim()).filter(Boolean) : []
 
-    let storedFileUrl: string | null = null
-    let originalFileName = providedOriginalName || (file ? file.name : '')
-    let fileSize = providedFileSize || (file ? file.size : 0)
-
-    if (providedFileUrl) {
-      // Expect a Supabase Storage URL prepared by the client
-      if (!providedFileUrl.startsWith('supabase://')) {
-        return NextResponse.json(
-          { error: "Unsupported fileUrl. Expected supabase:// URL" },
-          { status: 400 }
-        )
-      }
-      storedFileUrl = providedFileUrl
-    } else if (file) {
-      // Validate file
-      const validation = validateAudioFile(file)
-      if (!validation.valid) {
-        return NextResponse.json(
-          { error: validation.error },
-          { status: 400 }
-        )
-      }
-
-      // Generate unique filename
-      const timestamp = Date.now()
-      const fileExtension = file.name.split('.').pop() || ''
-      const sanitizedExt = fileExtension.replace(/[^a-zA-Z0-9]/g, '') || 'm4a'
-      const fileName = `${userId}_${timestamp}.${sanitizedExt}`
-
-      // Convert to buffer once
-      const bytes = await file.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-
-      if (supabase) {
-        const bucket = SUPABASE_BUCKET
-        const objectPath = `${userId}/${fileName}`
-        const { error: uploadError } = await supabase.storage
-          .from(bucket)
-          .upload(objectPath, buffer, {
-            contentType: (file as any).type || 'application/octet-stream',
-            upsert: true,
-          })
-
-        if (uploadError) {
-          console.error('Upload API - Supabase Storage upload failed:', uploadError)
-          return NextResponse.json(
-            { error: "Upload failed. Please try again." },
-            { status: 500 }
-          )
-        }
-
-        storedFileUrl = `supabase://${bucket}/${objectPath}`
-        console.log(`File uploaded to Supabase Storage: ${storedFileUrl}`)
-      } else {
-        // Fallback: local disk (works locally, not persistent on Vercel)
-        const uploadDir = join(process.cwd(), "uploads")
-        try {
-          await mkdir(uploadDir, { recursive: true })
-        } catch (error) {
-          // Directory might already exist
-        }
-        const filePath = join(uploadDir, fileName)
-        await writeFile(filePath, buffer)
-        storedFileUrl = `/uploads/${fileName}`
-        console.log(`File saved locally: ${storedFileUrl}`)
-      }
-    }
-
-    if (!storedFileUrl) {
-      return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
-    }
+    console.log('Upload API - Creating meeting record:', {
+      userId,
+      title,
+      storagePath,
+      originalFileName,
+      language
+    })
 
     // Create meeting record in database using Prisma
     const meeting = await prisma.meeting.create({
@@ -174,28 +112,33 @@ export async function POST(request: NextRequest) {
         tags: tags.join(','), // Convert array to comma-separated string
         language: language || 'auto',
         originalFileName: originalFileName || null,
-        fileUrl: storedFileUrl,
+        fileUrl: `supabase://Clarnote/${storagePath}`, // Store as supabase:// URL for transcription
         fileSize: fileSize || null,
         status: "UPLOADED",
         userId: userId,
       }
     })
 
+    console.log('Upload API - Meeting created:', meeting.id)
+
     // Start transcription process asynchronously
-    fetch(`${process.env.NEXTAUTH_URL}/api/transcribe`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+    fetch(`${request.nextUrl.origin}/api/transcribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ meetingId: meeting.id, qualityMode }),
-    }).catch(console.error)
+    }).catch(error => {
+      console.error('Upload API - Failed to trigger transcription:', error)
+    })
 
     return NextResponse.json({
-      message: "File uploaded successfully",
+      message: "Meeting record created successfully",
       meetingId: meeting.id,
     })
   } catch (error) {
-    console.error("Upload error:", error)
+    console.error("Upload API - Error:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    })
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
