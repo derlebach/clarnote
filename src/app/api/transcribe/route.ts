@@ -759,6 +759,8 @@ export async function POST(request: NextRequest) {
     
     // Resolve file path/stream depending on storage
     let localPath: string
+    console.log(`📂 Processing file URL: ${meeting.fileUrl}`)
+    
     if (meeting.fileUrl.startsWith('supabase://')) {
       if (!supabase) {
         throw new Error('Supabase not configured for downloading audio file')
@@ -767,15 +769,24 @@ export async function POST(request: NextRequest) {
       const firstSlash = urlSans.indexOf('/')
       const bucket = urlSans.slice(0, firstSlash) || SUPABASE_BUCKET
       const objectPath = urlSans.slice(firstSlash + 1)
+      
+      console.log(`⬇️ Downloading from Supabase: bucket="${bucket}", path="${objectPath}"`)
+      
       const { data, error } = await supabase.storage.from(bucket).download(objectPath)
       if (error || !data) {
+        console.error(`❌ Supabase download error:`, error)
         throw new Error(`Failed to download audio from Supabase: ${error?.message || 'unknown'}`)
       }
+      
+      console.log(`✅ File downloaded successfully from Supabase`)
+      
       const tempDir = join(process.cwd(), '.tmp')
       try { mkdirSync(tempDir, { recursive: true }) } catch {}
       localPath = join(tempDir, `${meetingId}-${Date.now()}.audio`)
       const arrayBuffer = await data.arrayBuffer()
       writeFileSync(localPath, Buffer.from(arrayBuffer))
+      
+      console.log(`💾 File saved to temporary path: ${localPath}`)
     } else if (meeting.fileUrl.startsWith('/uploads/')) {
       localPath = join(process.cwd(), 'uploads', meeting.fileUrl.replace('/uploads/', ''))
     } else {
@@ -844,18 +855,20 @@ export async function POST(request: NextRequest) {
     await prisma.meeting.update({
       where: { id: meetingId },
       data: {
-        status: 'TRANSCRIBED',
+        status: 'COMPLETED', // Use valid enum value
         transcript: processed.text,
         language: transcription.language || meeting.language,
-        duration: meeting.duration || 0,
-        transcriptSegments: JSON.stringify(speakerSegments),
-        transcriptionQuality: qualityMetrics.overallScore,
-        processingTime: Math.round(totalProcessingTime / 1000)
+        duration: Math.round((transcription.duration || 0) * 1000), // Convert to milliseconds
+        transcriptSegments: JSON.stringify(speakerSegments)
       }
     })
     
+    console.log(`✅ Meeting updated successfully with status: COMPLETED`)
+    
     // Trigger summary generation asynchronously
-    fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/summarize`, {
+    const summaryUrl = `${request.nextUrl.origin}/api/summarize`
+    console.log(`🚀 Triggering summary generation: ${summaryUrl}`)
+    fetch(summaryUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ meetingId })
@@ -878,15 +891,17 @@ export async function POST(request: NextRequest) {
     
     // Update meeting status to error
     try {
-      const { meetingId } = await request.json()
+      const body = await request.json()
+      const meetingId = body.meetingId
       if (meetingId) {
         await prisma.meeting.update({
           where: { id: meetingId },
           data: { 
-            status: 'ERROR',
+            status: 'ERROR', // Use valid enum value
             description: `Transcription failed: ${error instanceof Error ? error.message : 'Unknown error'}`
           }
         })
+        console.log(`❌ Meeting ${meetingId} marked as FAILED`)
       }
     } catch (updateError) {
       console.error('Failed to update meeting status:', updateError)
