@@ -283,7 +283,7 @@ export default function Dashboard() {
       requestBody.append('originalFileName', selectedFile.name)
       requestBody.append('fileSize', String(selectedFile.size))
 
-      const meetingResponse = await fetch('/api/upload', {
+      const meetingResponse = await fetch('/api/upload-simple', {
         method: 'POST',
         body: requestBody,
         credentials: 'include',
